@@ -8,7 +8,7 @@ var requestAnimFrame = (function(){
             window.setTimeout(callback, 1000 / 60);
         };
 })();
-
+var world;
 var map = {
 	width:28,
 	height:31,
@@ -81,7 +81,7 @@ function getStartY(h){
 }
 
 function parseMap(map){
-	var world = {
+	world = {
 		height:  map.data.length,
 		width:  map.data[0].length,
 		data: []
@@ -124,16 +124,83 @@ function parseMap(map){
 	return world;
 }
 
-function drawWallTile(x,y){
-	ctx.fillStyle = "rgb(0,34,255)";
+function getTile(posX,posY){
+	if (tileExists(posX,posY)){
+		
+		return world.data[posY][posX];	
+	}
+	return false;
+}
+
+function tileExists(posX,posY){
+	//check if tile out of world bounds
+
+	if (posX < 0 || posY < 0 || posX > world.data.length-1 || posY > world.data[0].length-1) return false;
+
+	return true;
+}
+
+function upper(tile){
+	return getTile(tile.posX,tile.posY-1);
+}
+
+function lower(tile){
+	return getTile(tile.posX,tile.posY+1);
+}
+
+function left(tile){
+	return getTile(tile.posX-1,tile.posY);
+}
+
+function right(tile){
+	return getTile(tile.posX+1,tile.posY);
+}
+
+function isWall(tile){
+	if (tile && tile.type ==='wall') return true;
+	return false;
+}
+
+function tileBlocked(tile){
+	//check if tile surounded by walls
+	return (isWall(upper(tile)) && isWall(lower(tile)) && isWall(left(tile)) && isWall(right(tile)));
+}
+
+function drawWallTile(x,y, tile){
 	ctx.strokeStyle = "rgb(0,34,255)";
-	ctx.fillRect(x,y,tileSize,tileSize);
+	ctx.fillStyle = "rgb(0,34,255)";
+	if (tileBlocked(tile)){
+		console.log("blocked");
+		if (!isWall(upper(left(tile)))) {
+			ctx.beginPath();
+			ctx.arc(x,y,tileSize/3,0,Math.PI/2, false);
+			ctx.stroke();
+		}
+		if (!isWall(upper(right(tile)))) {
+			ctx.beginPath();
+			ctx.arc(x+tileSize,y,tileSize/3,Math.PI,Math.PI/2, true);
+			ctx.stroke();
+		}
+		if (!isWall(lower(left(tile)))) {
+			ctx.beginPath();
+			ctx.arc(x,y+tileSize,tileSize/3,Math.PI*3/2,0, false);
+			ctx.stroke();
+		}
+		if (!isWall(lower(right(tile)))) {
+			ctx.beginPath();
+			ctx.arc(x+tileSize,y+tileSize,tileSize/3,Math.PI*3/2,Math.PI, true);
+			ctx.stroke();
+		}
+	} else {
+		ctx.fillRect(x,y,tileSize,tileSize);	
+	}
+	
+	
 }
 
 function drawPelletTile(x,y){
 	x = x+tileSize/2;
 	y = y+tileSize/2;
-	console.log(x,y);
 	ctx.fillStyle= "rgb(255,255,0)";
 	ctx.beginPath();
 	ctx.arc(x,y,tileSize/10, 0, Math.PI *2, true);
@@ -144,7 +211,6 @@ function drawPelletTile(x,y){
 function drawBoosterTile(x,y){
 	x = x+tileSize/2;
 	y = y+tileSize/2;
-	console.log(x,y);
 	ctx.fillStyle= "rgb(255,60,0)";
 	ctx.beginPath();
 	ctx.arc(x,y,tileSize/5, 0, Math.PI *2, true);
@@ -171,7 +237,7 @@ function drawWorld(world) {
 				break;
 
 				case "wall":
-				drawWallTile(x,y);
+				drawWallTile(x,y, tile);
 				break;
 
 				case "pellet":
