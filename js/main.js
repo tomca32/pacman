@@ -166,6 +166,48 @@ function tileBlocked(tile){
 	return (isWall(upper(tile)) && isWall(lower(tile)) && isWall(left(tile)) && isWall(right(tile)));
 }
 
+function isVerticalWall(tile) {
+	if (isWall(upper(tile)) && isWall(lower(tile))){
+		if (!isWall(left(tile)) || !isWall(right(tile))) return true;
+	}
+	return false;
+}
+
+function isHorizontalWall(tile) {
+	if (isWall(left(tile)) && isWall(right(tile))){
+		if (!isWall(upper(tile)) || !isWall(lower(tile))) return true;
+	}
+	return false;
+}
+
+function drawVerticalWall(x,y,tile){
+	ctx.beginPath();
+	if (!isWall(left(tile))){
+		ctx.moveTo(x+tileSize/3, y);
+		ctx.lineTo(x+tileSize/3,y+tileSize);
+		ctx.stroke();
+	}
+	if (!isWall(right(tile))){
+		ctx.moveTo(x+tileSize*2/3, y);
+		ctx.lineTo(x+tileSize*2/3,y+tileSize);
+		ctx.stroke();	
+	}
+}
+
+function drawHorizontalWall(x,y,tile){
+	ctx.beginPath();
+	if (!isWall(upper(tile))){
+		ctx.moveTo(x, y+tileSize/3);
+		ctx.lineTo(x+tileSize,y+tileSize/3);
+		ctx.stroke();
+	}
+	if (!isWall(lower(tile))){
+		ctx.moveTo(x, y+tileSize*2/3);
+		ctx.lineTo(x+tileSize,y+tileSize*2/3);
+		ctx.stroke();	
+	}
+}
+
 function drawWallTile(x,y, tile){
 	ctx.strokeStyle = "rgb(0,34,255)";
 	ctx.fillStyle = "rgb(0,34,255)";
@@ -192,7 +234,14 @@ function drawWallTile(x,y, tile){
 			ctx.stroke();
 		}
 	} else {
-		ctx.fillRect(x,y,tileSize,tileSize);	
+		if (isVerticalWall(tile)) {
+			drawVerticalWall(x,y,tile);
+		} else if (isHorizontalWall(tile)){
+			drawHorizontalWall(x,y,tile);
+		} else {
+			ctx.fillRect(x,y,tileSize,tileSize);
+		}
+		
 	}
 	
 	
