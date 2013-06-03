@@ -14,11 +14,11 @@ var map = {
 	height:10,
 	data: [
 	"XXXXXXXXXX",
-	"X........X", 
-	"X........X", 
-	"X........X", 
-	"X........X", 
-	"X........X", 
+	"XooooooooX", 
+	"X.XXX..XoX", 
+	"X.X.X..XoX", 
+	"X.X.X..XXX", 
+	"XXX.X....X", 
 	"X........X", 
 	"X........X", 
 	"X........X", 
@@ -85,7 +85,17 @@ function drawClosedTile(x,y){
 	ctx.fillStyle = "rgb(0,34,255)";
 	ctx.strokeStyle = "rgb(0,34,255)";
 	ctx.fillRect(x,y,tileSize,tileSize);
-	console.log(x, y, tileSize);
+}
+
+function drawPelletTile(x,y){
+	x = (x+tileSize/2);
+	y = (y+tileSize/2);
+	console.log(x,y);
+	ctx.fillStyle= "rgb(255,255,0)";
+	ctx.beginPath();
+	ctx.arc(x,y,tileSize/10, 0, Math.PI *2, true);
+	ctx.closePath();
+	ctx.fill();
 }
 
 function drawWorld(world) {
@@ -103,6 +113,10 @@ function drawWorld(world) {
 
 				case "closed":
 				drawClosedTile(x,y);
+				break;
+
+				case "pellet":
+				drawPelletTile(x,y);
 				break;
 
 			}
