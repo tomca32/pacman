@@ -10,19 +10,19 @@ var requestAnimFrame = (function(){
 })();
 
 var map = {
-	width:10,
+	width:28,
 	height:10,
 	data: [
-	"XXXXXXXXXX",
-	"XooooooooX", 
-	"X.XXX..XoX", 
-	"X.X.X..XoX", 
-	"X.X.X..XXX", 
-	"XXX.X....X", 
-	"X........X", 
-	"X........X", 
-	"X........X", 
-	"XXXXXXXXXX"]
+	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+	"XooooooooooooXXooooooooooooX", 
+	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
+	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
+	"XooooooooooooooooooooooooooX", 
+	"XoXXXXoXXoXXXXXXXXoXXoXXXXoX", 
+	"XooooooXXooooXXooooXXooooooX", 
+	"XXXXXXoXXXXXoXXoXXXXXoXXXXXX", 
+	"X........X.................X", 
+	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
 };
 //Maze dimensions 28 x 31
 
@@ -33,7 +33,18 @@ $(document).ready(function() {
 
 var wHeight = $(window).innerHeight();
 var wWidth = $(window).innerWidth();
-var tileSize = parseInt($('#gameCanvas').innerHeight()/map.height);
+function getTileSize(map) {
+	var cW = $('#gameCanvas').innerWidth();	
+	var cH = $('#gameCanvas').innerHeight();
+	if (cW/map.width<cH/map.height){
+		console.log(cW/map.width);
+		return cW/map.width;
+	}
+	console.log(cW);
+	return cH/map.height;
+}
+
+var tileSize = getTileSize(map);
 console.log(tileSize);
 var ctx = document.getElementById('gameCanvas').getContext('2d');
 function Tile (tileInfo) {
@@ -98,6 +109,17 @@ function drawPelletTile(x,y){
 	ctx.fill();
 }
 
+function drawBoosterTile(x,y){
+	x = (x+tileSize/2);
+	y = (y+tileSize/2);
+	console.log(x,y);
+	ctx.fillStyle= "rgb(255,60,0)";
+	ctx.beginPath();
+	ctx.arc(x,y,tileSize/5, 0, Math.PI *2, true);
+	ctx.closePath();
+	ctx.fill();	
+}
+
 function drawWorld(world) {
 	var x,y, row;
 	worldL = world.data.length;
@@ -117,6 +139,10 @@ function drawWorld(world) {
 
 				case "pellet":
 				drawPelletTile(x,y);
+				break;
+
+				case "booster":
+				drawBoosterTile(x,y);
 				break;
 
 			}
