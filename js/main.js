@@ -1,12 +1,12 @@
 var requestAnimFrame = (function(){
-    return window.requestAnimationFrame       ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame    ||
-        window.oRequestAnimationFrame      ||
-        window.msRequestAnimationFrame     ||
-        function(callback){
-            window.setTimeout(callback, 1000 / 60);
-        };
+	return window.requestAnimationFrame       ||
+	window.webkitRequestAnimationFrame ||
+	window.mozRequestAnimationFrame    ||
+	window.oRequestAnimationFrame      ||
+	window.msRequestAnimationFrame     ||
+	function(callback){
+		window.setTimeout(callback, 1000 / 60);
+	};
 })();
 var world;
 var map = {
@@ -41,7 +41,7 @@ var map = {
 	"XooooooXXooooXXooooXXooooooX",
 	"XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
 	"XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
-	"xooooooooooooooooooooooooooX",
+	"XooooooooooooooooooooooooooX",
 	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
 };
 //Maze dimensions 28 x 31
@@ -51,91 +51,92 @@ $(document).ready(function() {
 
 
 
-var wHeight = $(window).innerHeight();
-var wWidth = $(window).innerWidth();
-function getTileSize(map) {
-	var cW = $('#gameCanvas').innerWidth();	
-	var cH = $('#gameCanvas').innerHeight();
-	if (cW/map.width<cH/map.height){
-		console.log(cW/map.width);
-		return Math.floor(cW/map.width);
-	}
-	console.log(cW);
-	return Math.floor(cH/map.height);
-}
-
-var tileSize = getTileSize(map);
-console.log(tileSize);
-var ctx = document.getElementById('gameCanvas').getContext('2d');
-function Tile (tileInfo,posX,posY) {
-	this.type = tileInfo;
-	this.posX = posX;
-	this.posY = posY;
-}
-
-function getStartX(w){
-	return ($('#gameCanvas').innerWidth() - w*tileSize)/2;
-}
-function getStartY(h){
-	return ($('#gameCanvas').innerHeight() - h*tileSize)/2;
-}
-
-function parseMap(map){
-	world = {
-		height:  map.data.length,
-		width:  map.data[0].length,
-		data: []
-	};
-	var newTile, newLine;
-	var l = map.data.length;
-	for (var i = 0; i <l; i++) {
-		var line = map.data[i];
-		var lineL = line.length;
-		newLine = [];
-
-		for (var j = 0; j < lineL; j++) {
-			var tile = map.data[i][j];
-
-			switch (tile) {
-				case "X":
-				newTile = new Tile ("wall", j, i);
-				break;
-
-				case ".":
-				newTile = new Tile ("open", j, i);
-				break;	
-
-				case "o":
-				newTile = new Tile ("pellet", j, i);
-				break;
-
-				case "O":
-				newTile = new Tile ("booster", j ,i);
-				break;
-
-				case "G":
-				newTile = new Tile("gate",j,i);
-				break;
-			}
-			newLine.push(newTile);
+	var wHeight = $(window).innerHeight();
+	var wWidth = $(window).innerWidth();
+	function getTileSize(map) {
+		var cW = $('#gameCanvas').innerWidth();	
+		var cH = $('#gameCanvas').innerHeight();
+		if (cW/map.width<cH/map.height){
+			console.log(cW/map.width);
+			return Math.floor(cW/map.width);
 		}
-		world.data.push(newLine);
+		console.log(cW);
+		return Math.floor(cH/map.height);
 	}
-	return world;
-}
 
-function getTile(posX,posY){
-	if (tileExists(posX,posY)){
-		
-		return world.data[posY][posX];	
+	var tileSize = getTileSize(map);
+	console.log(tileSize);
+	var ctx = document.getElementById('gameCanvas').getContext('2d');
+	function Tile (tileInfo,posX,posY) {
+		this.type = tileInfo;
+		this.posX = posX;
+		this.posY = posY;
 	}
-	return false;
-}
 
-function tileExists(posX,posY){
+	function getStartX(w){
+		return ($('#gameCanvas').innerWidth() - w*tileSize)/2;
+	}
+	function getStartY(h){
+		return ($('#gameCanvas').innerHeight() - h*tileSize)/2;
+	}
+
+	function parseMap(map){
+		world = {
+			height:  map.data.length,
+			width:  map.data[0].length,
+			data: []
+		};
+		var newTile, newLine;
+		var l = map.data.length;
+		for (var i = 0; i <l; i++) {
+			var line = map.data[i];
+			var lineL = line.length;
+			newLine = [];
+
+			for (var j = 0; j < lineL; j++) {
+				var tile = map.data[i][j];
+
+				switch (tile) {
+					case "X":
+					newTile = new Tile ("wall", j, i);
+					break;
+
+					case ".":
+					newTile = new Tile ("open", j, i);
+					break;	
+
+					case "o":
+					newTile = new Tile ("pellet", j, i);
+					break;
+
+					case "O":
+					newTile = new Tile ("booster", j ,i);
+					break;
+
+					case "G":
+					newTile = new Tile("gate",j,i);
+					break;
+				}
+				newLine.push(newTile);
+			}
+			world.data.push(newLine);
+		}
+		return world;
+	}
+
+	function getTile(posX,posY){
+		if (tileExists(posX,posY)){
+
+			return world.data[posY][posX];	
+		}
+		return false;
+	}
+
+	function tileExists(posX,posY){
 	//check if tile out of world bounds
+	if (isNaN(posX) || isNaN(posY) || typeof posX =='undefined' || typeof posY == 'undefined') return false;
 
-	if (posX < 0 || posY < 0 || posX > world.data.length-1 || posY > world.data[0].length-1) return false;
+	if (posX < 0 || posY < 0 || posX > world.data[0].length-1 || posY > world.data.length -1) return false;
 
 	return true;
 }
@@ -157,7 +158,9 @@ function right(tile){
 }
 
 function isWall(tile){
-	if (tile && tile.type ==='wall') return true;
+	if (tile) {
+		if (!tileExists(tile.posX, tile.posY) || tile.type ==='wall') return true;
+	} 
 	return false;
 }
 
@@ -208,37 +211,42 @@ function drawHorizontalWall(x,y,tile){
 	}
 }
 
+function drawCorner(x,y,tile){
+	if (!isWall(upper(left(tile)))) {
+		ctx.beginPath();
+		ctx.arc(x,y,tileSize/3,0,Math.PI/2, false);
+		ctx.stroke();
+	}
+	if (!isWall(upper(right(tile)))) {
+		ctx.beginPath();
+		ctx.arc(x+tileSize,y,tileSize/3,Math.PI,Math.PI/2, true);
+		ctx.stroke();
+	}
+	if (!isWall(lower(left(tile)))) {
+		ctx.beginPath();
+		ctx.arc(x,y+tileSize,tileSize/3,Math.PI*3/2,0, false);
+		ctx.stroke();
+	}
+	if (!isWall(lower(right(tile)))) {
+		ctx.beginPath();
+		ctx.arc(x+tileSize,y+tileSize,tileSize/3,Math.PI*3/2,Math.PI, true);
+		ctx.stroke();
+	}
+}
+
 function drawWallTile(x,y, tile){
 	ctx.strokeStyle = "rgb(0,34,255)";
 	ctx.fillStyle = "rgb(0,34,255)";
 	if (tileBlocked(tile)){
-		console.log("blocked");
-		if (!isWall(upper(left(tile)))) {
-			ctx.beginPath();
-			ctx.arc(x,y,tileSize/3,0,Math.PI/2, false);
-			ctx.stroke();
-		}
-		if (!isWall(upper(right(tile)))) {
-			ctx.beginPath();
-			ctx.arc(x+tileSize,y,tileSize/3,Math.PI,Math.PI/2, true);
-			ctx.stroke();
-		}
-		if (!isWall(lower(left(tile)))) {
-			ctx.beginPath();
-			ctx.arc(x,y+tileSize,tileSize/3,Math.PI*3/2,0, false);
-			ctx.stroke();
-		}
-		if (!isWall(lower(right(tile)))) {
-			ctx.beginPath();
-			ctx.arc(x+tileSize,y+tileSize,tileSize/3,Math.PI*3/2,Math.PI, true);
-			ctx.stroke();
-		}
+		drawCorner(x,y,tile);
 	} else {
 		if (isVerticalWall(tile)) {
 			drawVerticalWall(x,y,tile);
 		} else if (isHorizontalWall(tile)){
 			drawHorizontalWall(x,y,tile);
 		} else {
+			console.log(x,y);
+			//drawCorner(x,y,tile);
 			ctx.fillRect(x,y,tileSize,tileSize);
 		}
 		
