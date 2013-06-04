@@ -38,10 +38,10 @@ var map = {
 	"XOooXXooooooo..oooooooXXooOX",
 	"XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
 	"XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
-	"XooooooXXooooXXooooXXooooooX",
+	"XooooooXXooooXXoXooXXooooooX",
 	"XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
-	"XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
-	"XooooooooooooooooooooooooooX",
+	"XoXXXXXXXXXXoXXXXXXXXXXXXXoX",
+	"XooooooooooooXoooooooooooooX",
 	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
 };
 //Maze dimensions 28 x 31
@@ -189,11 +189,25 @@ function drawVerticalWall(x,y,tile){
 		ctx.moveTo(x+tileSize/3, y);
 		ctx.lineTo(x+tileSize/3,y+tileSize);
 		ctx.stroke();
+	} else {
+		if (!isWall(left(upper(tile)))){
+			drawDownRightCornerInner(x,y,tile);
+		} 
+		if (!isWall(left(lower(tile)))) {
+			drawUpRightCornerInner(x,y,tile);
+		}
 	}
 	if (!isWall(right(tile))){
 		ctx.moveTo(x+tileSize*2/3, y);
 		ctx.lineTo(x+tileSize*2/3,y+tileSize);
 		ctx.stroke();	
+	} else {
+		if (!isWall(right(upper(tile)))){
+			drawDownLeftCornerInner(x,y,tile);
+		}
+		if (!isWall(right(lower(tile)))){
+			drawUpLeftCornerInner(x,y,tile);
+		}
 	}
 }
 
@@ -203,34 +217,112 @@ function drawHorizontalWall(x,y,tile){
 		ctx.moveTo(x, y+tileSize/3);
 		ctx.lineTo(x+tileSize,y+tileSize/3);
 		ctx.stroke();
+	} else {
+		if (!isWall(upper(left(tile)))){
+			drawDownRightCornerInner(x,y,tile);
+		}
+	    if (!isWall(upper(right(tile)))){
+			drawDownLeftCornerInner(x,y,tile);
+		}
 	}
 	if (!isWall(lower(tile))){
 		ctx.moveTo(x, y+tileSize*2/3);
 		ctx.lineTo(x+tileSize,y+tileSize*2/3);
 		ctx.stroke();	
+	} else {
+		if (!isWall(lower(left(tile)))){
+			drawUpRightCornerInner(x,y,tile);
+		}
+		if (!isWall(lower(right(tile)))){
+			drawUpLeftCornerInner(x,y,tile);
+		}
 	}
+}
+
+function drawUpRightCornerInner(x,y,tile) {
+	ctx.beginPath();
+	ctx.arc(x,y+tileSize,tileSize/3,Math.PI*3/2,0, false);
+	ctx.stroke();
+}
+
+function drawUpLeftCornerInner (x,y,tile) {
+	ctx.beginPath();
+	ctx.arc(x+tileSize,y+tileSize,tileSize/3,Math.PI*3/2,Math.PI, true);
+	ctx.stroke();
+}
+
+function drawDownRightCornerInner (x,y,tile) {
+	ctx.beginPath();
+	ctx.arc(x,y,tileSize/3,0,Math.PI/2, false);
+	ctx.stroke();	
+}
+
+function drawDownLeftCornerInner (x,y,tile) {
+	ctx.beginPath();
+	ctx.arc(x+tileSize,y,tileSize/3,Math.PI,Math.PI/2, true);
+	ctx.stroke();
+}
+
+function drawUpRightCornerOuter(x,y,tile) {
+	ctx.beginPath();
+	ctx.arc(x,y+tileSize,tileSize*2/3,Math.PI*3/2,0, false);
+	ctx.stroke();
+}
+
+function drawUpLeftCornerOuter (x,y,tile) {
+	ctx.beginPath();
+	ctx.arc(x+tileSize,y+tileSize,tileSize*2/3,Math.PI*3/2,Math.PI, true);
+	ctx.stroke();
+}
+
+function drawDownLeftCornerOuter (x,y,tile) {
+	ctx.beginPath();
+	ctx.arc(x+tileSize,y,tileSize*2/3,Math.PI,Math.PI/2, true);
+	ctx.stroke();
+}
+
+function drawDownRightCornerOuter (x,y,tile) {
+	ctx.beginPath();
+	ctx.arc(x,y,tileSize*2/3,0,Math.PI/2, false);
+	ctx.stroke();	
 }
 
 function drawCorner(x,y,tile){
 	if (!isWall(upper(left(tile)))) {
-		ctx.beginPath();
-		ctx.arc(x,y,tileSize/3,0,Math.PI/2, false);
-		ctx.stroke();
+		drawDownRightCornerInner(x,y,tile);
 	}
 	if (!isWall(upper(right(tile)))) {
-		ctx.beginPath();
-		ctx.arc(x+tileSize,y,tileSize/3,Math.PI,Math.PI/2, true);
-		ctx.stroke();
+		drawDownLeftCornerInner(x,y,tile);		
 	}
 	if (!isWall(lower(left(tile)))) {
-		ctx.beginPath();
-		ctx.arc(x,y+tileSize,tileSize/3,Math.PI*3/2,0, false);
-		ctx.stroke();
+		drawUpRightCornerInner(x,y,tile);
 	}
 	if (!isWall(lower(right(tile)))) {
-		ctx.beginPath();
-		ctx.arc(x+tileSize,y+tileSize,tileSize/3,Math.PI*3/2,Math.PI, true);
-		ctx.stroke();
+		drawUpLeftCornerInner(x,y,tile);
+	}
+}
+
+function drawCornerTile(x,y,tile){
+	if (isWall(upper(tile)) && isWall(right(tile))) {
+		drawDownLeftCornerOuter(x,y,tile);
+		if (!isWall(lower(left(tile))) && !isWall(upper(right(tile)))) {
+			drawDownLeftCornerInner(x,y,tile);
+		}
+	} else if (isWall(upper(tile)) && isWall(left(tile))) {
+		drawDownRightCornerOuter(x,y,tile);
+		if (!isWall(lower(right(tile))) && !isWall(upper(left(tile)))) {
+			drawDownRightCornerInner(x,y,tile);
+		}
+	} else if (isWall(lower(tile)) && isWall(right(tile))) {
+		drawUpLeftCornerOuter(x,y,tile);
+		if (!isWall(upper(left(tile))) && !isWall(lower(right(tile)))){
+			drawUpLeftCornerInner(x,y,tile);
+		}
+	} else if (isWall(lower(tile)) && isWall(left(tile))) {
+		drawUpRightCornerOuter(x,y,tile);
+		if (!isWall(lower(left(tile))) && !isWall(upper(right(tile)))){
+			drawUpRightCornerInner(x,y,tile);
+		}
 	}
 }
 
@@ -245,9 +337,8 @@ function drawWallTile(x,y, tile){
 		} else if (isHorizontalWall(tile)){
 			drawHorizontalWall(x,y,tile);
 		} else {
-			console.log(x,y);
-			//drawCorner(x,y,tile);
-			ctx.fillRect(x,y,tileSize,tileSize);
+			drawCornerTile(x,y,tile);
+			//ctx.fillRect(x,y,tileSize,tileSize);
 		}
 		
 	}
