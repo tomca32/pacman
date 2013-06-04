@@ -29,7 +29,7 @@ var map = {
 	"......o...X......X...o......",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
 	".....XoXX.XXXXXXXX.XXoX.....",
-	".....XoXX..........XXoX.....",
+	".....XoXX.....S....XXoX.....",
 	".....XoXX.XXXXXXXX.XXoX.....",
 	"XXXXXXoXX.XXXXXXXX.XXoXXXXXX",
 	"XooooooooooooXXooooooooooooX",
@@ -38,10 +38,10 @@ var map = {
 	"XOooXXooooooo..oooooooXXooOX",
 	"XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
 	"XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
-	"XooooooXXooooXXoXooXXooooooX",
+	"XooooooXXooooXXooooXXooooooX",
 	"XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
-	"XoXXXXXXXXXXoXXXXXXXXXXXXXoX",
-	"XooooooooooooXoooooooooooooX",
+	"XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
+	"XooooooooooooooooooooooooooX",
 	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
 };
 //Maze dimensions 28 x 31
@@ -116,6 +116,9 @@ $(document).ready(function() {
 					case "G":
 					newTile = new Tile("gate",j,i);
 					break;
+
+					case "S":
+					newTile = new Tile("start",j,i);
 				}
 				newLine.push(newTile);
 			}
@@ -124,15 +127,14 @@ $(document).ready(function() {
 		return world;
 	}
 
-	function getTile(posX,posY){
-		if (tileExists(posX,posY)){
-
-			return world.data[posY][posX];	
-		}
-		return false;
+function getTile(posX,posY){
+	if (tileExists(posX,posY)){
+		return world.data[posY][posX];	
 	}
+	return false;
+}
 
-	function tileExists(posX,posY){
+function tileExists(posX,posY){
 	//check if tile out of world bounds
 	if (isNaN(posX) || isNaN(posY) || typeof posX =='undefined' || typeof posY == 'undefined') return false;
 
@@ -159,7 +161,7 @@ function right(tile){
 
 function isWall(tile){
 	if (tile) {
-		if (!tileExists(tile.posX, tile.posY) || tile.type ==='wall') return true;
+		if (!tileExists(tile.posX, tile.posY) || tile.type ==='wall' || tile.type ==='gate') return true;
 	} 
 	return false;
 }
@@ -302,6 +304,28 @@ function drawCorner(x,y,tile){
 	}
 }
 
+function drawLeftEnd(x,y,tile) {
+	ctx.moveTo(x+tileSize,y+tileSize/3);
+	ctx.lineTo(x+tileSize/3, y+tileSize/3);
+	ctx.moveTo(x+tileSize,y+tileSize*2/3);
+	ctx.lineTo(x+tileSize/3, y+tileSize*2/3);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.arc(x+tileSize/3, y+tileSize/2,tileSize/6,Math.PI*3/2, Math.PI/2,true);
+	ctx.stroke();
+}
+
+function drawRightEnd(x,y,tile) {
+	ctx.moveTo(x,y+tileSize/3);
+	ctx.lineTo(x+tileSize*2/3, y+tileSize/3);
+	ctx.moveTo(x,y+tileSize*2/3);
+	ctx.lineTo(x+tileSize*2/3, y+tileSize*2/3);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.arc(x+tileSize*2/3, y+tileSize/2,tileSize/6,Math.PI*3/2, Math.PI/2,false);
+	ctx.stroke();
+}
+
 function drawCornerTile(x,y,tile){
 	if (isWall(upper(tile)) && isWall(right(tile))) {
 		drawDownLeftCornerOuter(x,y,tile);
@@ -323,6 +347,13 @@ function drawCornerTile(x,y,tile){
 		if (!isWall(lower(left(tile))) && !isWall(upper(right(tile)))){
 			drawUpRightCornerInner(x,y,tile);
 		}
+	} else {
+		//Not corner but a last tile in line
+		if (isWall(right(tile))){
+			drawLeftEnd(x,y,tile);
+		} else if (isWall(left(tile))){
+			drawRightEnd(x,y,tile);
+		}
 	}
 }
 
@@ -338,7 +369,6 @@ function drawWallTile(x,y, tile){
 			drawHorizontalWall(x,y,tile);
 		} else {
 			drawCornerTile(x,y,tile);
-			//ctx.fillRect(x,y,tileSize,tileSize);
 		}
 		
 	}
@@ -366,14 +396,21 @@ function drawBoosterTile(x,y){
 	ctx.fill();	
 }
 
-function drawGateTile(x,y){
-	ctx.fillStyle = "rgb(255,255,255)";
-	ctx.fillRect(x,y,tileSize,tileSize);	
+function drawGateTile(x,y,tile){
+	ctx.fillStyle = "rgba(255,255,255, 0.5)";
+	if (isWall(left(tile)) || isWall(right(tile))){
+		ctx.fillRect(x, y+tileSize/3, tileSize, tileSize/3);
+	}
+	
+	//ctx.fillRect(x,y,tileSize,tileSize);	
 }
 
 function drawWorld(world) {
 	var x,y, row;
+	console.log(world);
 	worldL = world.data.length;
+	ctx.fillStyle= "rgb(0,0,0)";
+	ctx.fillRect(0,0,$('#gameCanvas').width(), $('#gameCanvas').height());
 	for (var i = 0; i < worldL; i++){
 		y = getStartY(world.height)+i*tileSize;
 		row = world.data[i].length;
@@ -397,7 +434,8 @@ function drawWorld(world) {
 				break;
 
 				case "gate":
-				drawGateTile(x,y);
+				drawGateTile(x,y,tile);
+				break;
 
 			}
 		}
@@ -407,19 +445,74 @@ function drawWorld(world) {
 
 
 $(window).load(function(){
-	var world = parseMap(map);
+	world = parseMap(map);
 	drawWorld(world);
-
+	$(document).on('click','#editor', startEditor);
+	//startGame();
 });
 
 $(window).resize(function(){
 	wHeight = $(window).innerHeight();
 	wWidth = $(window).innerWidth();
-
-	tileSize = $('#gameCanvas').innerHeight()/map.height;
+	//$('#gameCanvas').css({'width':'100%', 'height':'100%'});
+	//tileSize = $('#gameCanvas').innerHeight()/map.height;
+	//world = parseMap(map);
+	//drawWorld(world);
 });
 
+function startGame() {
+
+}
+
+function getMousePos(c, e) {
+    var rect = c.getBoundingClientRect();
+    return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+    };
+}
+
+function getTileAt(x,y) {
+	return getTile(Math.round((x-getStartX(world.width))/tileSize), Math.round((y-getStartY(world.height))/tileSize));
+}
+
+function drawEditor(tile) {
+	var ctxed = document.getElementById('editorCanvas').getContext('2d');
+	var x = tile.posX*tileSize + getStartX(world.width);
+	var y = tile.posY*tileSize + getStartY(world.height);
+	ctxed.clearRect(0,0,$('#editorCanvas').innerWidth(), $('#editorCanvas').innerHeight());
+	ctxed.fillStyle="rgba(255,255,255,0.5)";
+	ctxed.clearRect(0,0,editor.width, editor.height);
+	ctxed.fillRect(x,y,tileSize,tileSize);
+}
+
+function startEditor(){
+	console.log(world);
+	var mousePos;
+	var activeTile;
+	var editor = document.createElement("canvas");
+	editor.id = "editorCanvas";
+	editor.height = $('#gameCanvas').innerHeight();
+	editor.width = $('#gameCanvas').innerWidth();
+	document.body.appendChild(editor);
+	$('#editorCanvas').css({'position':'absolute','left':$('#gameCanvas').offset().left, 'top':$('#gameCanvas').offset().top});
+	var ctxed = editor.getContext('2d');
+	editor.addEventListener('mousemove', function(e){
+		mousePos = getMousePos(editor,e);
+		var tile = getTileAt(mousePos.x, mousePos.y);
+		console.log(tile);
+		if (tile && (typeof activeTile ==='undefined' || tile.posX !== activeTile.posX || tile.posY !== activeTile.posY)) {
+			activeTile = tile;
+			drawEditor(activeTile);
+		}
+	});
+
+	editor.addEventListener('click', function(e){
+		world.data[activeTile.posY][activeTile.posX] = new Tile ("wall", activeTile.posX, activeTile.posY);
+		drawWorld(world);
+	});
 
 
+}
 
 });
