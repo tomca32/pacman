@@ -4,12 +4,22 @@
 <title>Pacman</title>
 <link rel="stylesheet" type="text/css" href="styles.css">
 <script src="js/jquery-2.0.2.min.js"></script>
+<script type="text/javascript" src="js/TweenLite.min.js"></script>
+<script type="text/javascript" src="js/CSSPlugin.min.js"></script>
 <script src="js/main.js"></script>
 </head>
 <body>
-	<div id="options" style="margin: 0 auto; text-align='center'">
+	<div id="options" style="margin: 0 auto; text-align:center">
 		<button id="editor">Editor</button>
 	</div>
+	<aside>
+		<div id="editorOptions">
+			<div id="emptyOption" class="option"><img src="img/empty.jpg"></div>
+			<div id="wallOption" class="option"><img src="img/wall.jpg"></div>
+			<div id="pelletOption" class="option"><img src="img/pellet.jpg"></div>
+			<div id="boosterOption" class="option"><img src="img/booster.jpg"></div>
+		</div>
+	</aside>
 	<canvas id="gameCanvas" width="800" height="600"></canvas>
 </body>
 </html>

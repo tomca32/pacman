@@ -171,6 +171,10 @@ function tileBlocked(tile){
 	return (isWall(upper(tile)) && isWall(lower(tile)) && isWall(left(tile)) && isWall(right(tile)));
 }
 
+function isolatedTile(tile) {
+	return (!isWall(upper(tile)) && !isWall(lower(tile)) && !isWall(left(tile)) && !isWall(right(tile)));
+}
+
 function isVerticalWall(tile) {
 	if (isWall(upper(tile)) && isWall(lower(tile))){
 		if (!isWall(left(tile)) || !isWall(right(tile))) return true;
@@ -304,6 +308,12 @@ function drawCorner(x,y,tile){
 	}
 }
 
+function drawIsolatedWall(x,y,tile){
+	ctx.beginPath();
+	ctx.arc(x+tileSize/2, y+tileSize/2,tileSize/6,0, Math.PI*2,true);
+	ctx.stroke();
+}
+
 function drawLeftEnd(x,y,tile) {
 	ctx.moveTo(x+tileSize,y+tileSize/3);
 	ctx.lineTo(x+tileSize/3, y+tileSize/3);
@@ -324,6 +334,28 @@ function drawRightEnd(x,y,tile) {
 	ctx.beginPath();
 	ctx.arc(x+tileSize*2/3, y+tileSize/2,tileSize/6,Math.PI*3/2, Math.PI/2,false);
 	ctx.stroke();
+}
+
+function drawTopEnd(x,y,tile) {
+	ctx.moveTo(x+tileSize/3,y+tileSize);
+	ctx.lineTo(x+tileSize/3, y+tileSize/3);
+	ctx.moveTo(x+tileSize*2/3,y+tileSize);
+	ctx.lineTo(x+tileSize*2/3, y+tileSize/3);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.arc(x+tileSize/2, y+tileSize/3,tileSize/6,0, Math.PI,true);
+	ctx.stroke();	
+}
+
+function drawBottomEnd(x,y,tile) {
+	ctx.moveTo(x+tileSize/3,y);
+	ctx.lineTo(x+tileSize/3, y+tileSize*2/3);
+	ctx.moveTo(x+tileSize*2/3,y);
+	ctx.lineTo(x+tileSize*2/3, y+tileSize*2/3);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.arc(x+tileSize/2, y+tileSize*2/3,tileSize/6,0, Math.PI,false);
+	ctx.stroke();	
 }
 
 function drawCornerTile(x,y,tile){
@@ -353,6 +385,10 @@ function drawCornerTile(x,y,tile){
 			drawLeftEnd(x,y,tile);
 		} else if (isWall(left(tile))){
 			drawRightEnd(x,y,tile);
+		} else if (isWall(lower(tile))){
+			drawTopEnd(x,y,tile);
+		} else if (isWall(upper(tile))){
+			drawBottomEnd(x,y,tile);
 		}
 	}
 }
@@ -362,7 +398,9 @@ function drawWallTile(x,y, tile){
 	ctx.fillStyle = "rgb(0,34,255)";
 	if (tileBlocked(tile)){
 		drawCorner(x,y,tile);
-	} else {
+	} else if (isolatedTile(tile)){
+		drawIsolatedWall(x,y,tile);
+	} else{
 		if (isVerticalWall(tile)) {
 			drawVerticalWall(x,y,tile);
 		} else if (isHorizontalWall(tile)){
@@ -447,6 +485,7 @@ function drawWorld(world) {
 $(window).load(function(){
 	world = parseMap(map);
 	drawWorld(world);
+
 	$(document).on('click','#editor', startEditor);
 	//startGame();
 });
@@ -487,7 +526,11 @@ function drawEditor(tile) {
 }
 
 function startEditor(){
-	console.log(world);
+	$('#editor').html('Close Editor');
+	$(document).off('click','#editor');
+	$(document).on('click', '#editor', closeEditor);
+
+	TweenLite.to('aside', 0.5, {left:0});
 	var mousePos;
 	var activeTile;
 	var editor = document.createElement("canvas");
@@ -506,13 +549,34 @@ function startEditor(){
 			drawEditor(activeTile);
 		}
 	});
+	var action;
 
+	$(document).on('click', '#emptyOption', function(){
+		action = function(){return new Tile ("open", activeTile.posX, activeTile.posY);}
+	});
+	$(document).on('click', '#wallOption', function(){
+		action = function(){return new Tile ("wall", activeTile.posX, activeTile.posY);}
+	});
+	$(document).on('click', '#pelletOption', function(){
+		action = function(){return new Tile ("pellet", activeTile.posX, activeTile.posY);}
+	});
+	$(document).on('click', '#boosterOption', function(){
+		action = function(){return new Tile ("booster", activeTile.posX, activeTile.posY);}
+	});
 	editor.addEventListener('click', function(e){
-		world.data[activeTile.posY][activeTile.posX] = new Tile ("wall", activeTile.posX, activeTile.posY);
+		world.data[activeTile.posY][activeTile.posX] = action();//new Tile ("wall", activeTile.posX, activeTile.posY);
 		drawWorld(world);
 	});
 
 
+}
+
+function closeEditor() {
+	TweenLite.to('aside', 0.5, {left:-200});
+	$(document).off('click','#editor');
+	$('#editor').html('Editor');
+	$(document).on('click','#editor', startEditor);
+	document.body.removeChild(document.getElementById('editorCanvas'));
 }
 
 });

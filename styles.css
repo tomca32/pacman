@@ -11,3 +11,13 @@ canvas#gameCanvas {
 	background: black;
 	display: block;
 }
+
+aside {
+	position: absolute;
+	top:0;
+	left:-200px;
+	height:100%;
+	background: grey;
+	border: silver solid 2px;
+	box-shadow: black 2px 2px 20px;
+}
