@@ -512,7 +512,7 @@ function getMousePos(c, e) {
 }
 
 function getTileAt(x,y) {
-	return getTile(Math.round((x-getStartX(world.width))/tileSize), Math.round((y-getStartY(world.height))/tileSize));
+	return getTile(Math.floor((x-getStartX(world.width))/tileSize), Math.floor((y-getStartY(world.height))/tileSize));
 }
 
 function drawEditor(tile) {
