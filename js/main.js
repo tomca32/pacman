@@ -587,6 +587,7 @@ function startEditor(){
 		if (!action) return false;
 		world.data[activeTile.posY][activeTile.posX] = action();//new Tile ("wall", activeTile.posX, activeTile.posY);
 		drawWorld(world);
+		beforePreview = false;
 	});
 
 
