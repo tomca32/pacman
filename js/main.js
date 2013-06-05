@@ -536,30 +536,55 @@ function startEditor(){
 	document.body.appendChild(editor);
 	$('#editorCanvas').css({'position':'absolute','left':$('#gameCanvas').offset().left, 'top':$('#gameCanvas').offset().top});
 	var ctxed = editor.getContext('2d');
+	
+	var action = false;
+
+	var beforePreview = false;
+
+	$(document).on('click', '#emptyOption', function(){
+		action = function(){return new Tile ("open", activeTile.posX, activeTile.posY);};
+	});
+	$(document).on('click', '#wallOption', function(){
+		action = function(){return new Tile ("wall", activeTile.posX, activeTile.posY);};
+	});
+	$(document).on('click', '#pelletOption', function(){
+		action = function(){return new Tile ("pellet", activeTile.posX, activeTile.posY);};
+	});
+	$(document).on('click', '#boosterOption', function(){
+		action = function(){return new Tile ("booster", activeTile.posX, activeTile.posY);};
+	});
+	
 	editor.addEventListener('mousemove', function(e){
 		mousePos = getMousePos(editor,e);
 		var tile = getTileAt(mousePos.x, mousePos.y);
+		var redraw = false; //if redraw needed
 		console.log(tile);
 		if (tile && (typeof activeTile ==='undefined' || tile.posX !== activeTile.posX || tile.posY !== activeTile.posY)) {
 			activeTile = tile;
 			drawEditor(activeTile);
+
+			if (action) {
+				if (beforePreview){
+					//restoring previewed tile
+					if (world.data[beforePreview.posY][beforePreview.posX].type !== beforePreview.type){
+						world.data[beforePreview.posY][beforePreview.posX] = new Tile (beforePreview.type, beforePreview.posX, beforePreview.posY);
+						redraw = true;
+					}
+				}
+				var newT = action();
+				if (activeTile.type !== newT.type){
+					//drawing preview tile
+					beforePreview = activeTile;
+					world.data[activeTile.posY][activeTile.posX] = new Tile (newT.type, newT.posX, newT.posY);
+					redraw = true;
+				}
+				if (redraw) drawWorld(world);
+			}
 		}
 	});
-	var action;
 
-	$(document).on('click', '#emptyOption', function(){
-		action = function(){return new Tile ("open", activeTile.posX, activeTile.posY);}
-	});
-	$(document).on('click', '#wallOption', function(){
-		action = function(){return new Tile ("wall", activeTile.posX, activeTile.posY);}
-	});
-	$(document).on('click', '#pelletOption', function(){
-		action = function(){return new Tile ("pellet", activeTile.posX, activeTile.posY);}
-	});
-	$(document).on('click', '#boosterOption', function(){
-		action = function(){return new Tile ("booster", activeTile.posX, activeTile.posY);}
-	});
 	editor.addEventListener('click', function(e){
+		if (!action) return false;
 		world.data[activeTile.posY][activeTile.posX] = action();//new Tile ("wall", activeTile.posX, activeTile.posY);
 		drawWorld(world);
 	});
