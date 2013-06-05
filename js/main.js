@@ -312,7 +312,7 @@ function drawIsolatedWall(x,y,tile){
 	ctx.beginPath();
 	ctx.arc(x+tileSize/2, y+tileSize/2,tileSize/6,0, Math.PI*2,true);
 	ctx.stroke();
-}
+} 
 
 function drawLeftEnd(x,y,tile) {
 	ctx.moveTo(x+tileSize,y+tileSize/3);
@@ -361,24 +361,20 @@ function drawBottomEnd(x,y,tile) {
 function drawCornerTile(x,y,tile){
 	if (isWall(upper(tile)) && isWall(right(tile))) {
 		drawDownLeftCornerOuter(x,y,tile);
-		if (!isWall(lower(left(tile))) && !isWall(upper(right(tile)))) {
-			drawDownLeftCornerInner(x,y,tile);
-		}
+		if (!isWall(upper(right(tile)))) drawDownLeftCornerInner(x,y,tile);
+
 	} else if (isWall(upper(tile)) && isWall(left(tile))) {
 		drawDownRightCornerOuter(x,y,tile);
-		if (!isWall(lower(right(tile))) && !isWall(upper(left(tile)))) {
-			drawDownRightCornerInner(x,y,tile);
-		}
+		if (!isWall(upper(left(tile)))) drawDownRightCornerInner(x,y,tile);
+		
 	} else if (isWall(lower(tile)) && isWall(right(tile))) {
 		drawUpLeftCornerOuter(x,y,tile);
-		if (!isWall(upper(left(tile))) && !isWall(lower(right(tile)))){
-			drawUpLeftCornerInner(x,y,tile);
-		}
+		if (!isWall(lower(right(tile)))) drawUpLeftCornerInner(x,y,tile);
+		
 	} else if (isWall(lower(tile)) && isWall(left(tile))) {
 		drawUpRightCornerOuter(x,y,tile);
-		if (!isWall(lower(left(tile))) && !isWall(upper(right(tile)))){
-			drawUpRightCornerInner(x,y,tile);
-		}
+		if (!isWall(lower(left(tile))))	drawUpRightCornerInner(x,y,tile);
+		
 	} else {
 		//Not corner but a last tile in line
 		if (isWall(right(tile))){
