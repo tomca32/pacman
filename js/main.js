@@ -10,8 +10,11 @@ var requestAnimFrame = (function(){
 })();
 var world;
 var map = {
-	width:28,
-	height:31,
+	bgColor: "rgb(0,0,0)",
+	wallColor: "rgb(0,34,255)",
+	pelletColor: "rgb(255,255,0)",
+	boosterColor: "rgb(255,60,0)",
+	gateColor: "rgba(255,255,255, 0.5)",
 	data: [
 	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 	"XooooooooooooXXooooooooooooX", 
@@ -44,90 +47,87 @@ var map = {
 	"XooooooooooooooooooooooooooX",
 	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
 };
-//Maze dimensions 28 x 31
 
 $(document).ready(function() {
-
-
-
-
-	var wHeight = $(window).innerHeight();
-	var wWidth = $(window).innerWidth();
-	function getTileSize(map) {
-		var cW = $('#gameCanvas').innerWidth();	
-		var cH = $('#gameCanvas').innerHeight();
-		if (cW/map.width<cH/map.height){
-			console.log(cW/map.width);
-			return Math.floor(cW/map.width);
-		}
-		console.log(cW);
-		return Math.floor(cH/map.height);
+var wHeight = $(window).innerHeight();
+var wWidth = $(window).innerWidth();
+function getTileSize(map) {
+	var cW = $('#gameCanvas').innerWidth();	
+	var cH = $('#gameCanvas').innerHeight();
+	if (cW/map.width<cH/map.data.length){
+		console.log(cW/map.data[0].length);
+		return Math.floor(cW/map.data[0].length);
 	}
+	return Math.floor(cH/map.data.length);
+}
+var tileSize = getTileSize(map);
+console.log(tileSize);
+var ctx = document.getElementById('gameCanvas').getContext('2d');
+function Tile (tileInfo,posX,posY) {
+	this.type = tileInfo;
+	this.posX = posX;
+	this.posY = posY;
+}
+function getStartX(w){
+	return ($('#gameCanvas').innerWidth() - w*tileSize)/2;
+}
+function getStartY(h){
+	return ($('#gameCanvas').innerHeight() - h*tileSize)/2;
+}
 
-	var tileSize = getTileSize(map);
-	console.log(tileSize);
-	var ctx = document.getElementById('gameCanvas').getContext('2d');
-	function Tile (tileInfo,posX,posY) {
-		this.type = tileInfo;
-		this.posX = posX;
-		this.posY = posY;
-	}
+function parseMap(map){
+	world = {
+		height:  map.data.length,
+		width:  map.data[0].length,
+		data: [],
+		bgColor: map.bgColor,
+		pelletColor: map.pelletColor,
+		boosterColor: map.boosterColor,
+		wallColor: map.wallColor,
+		gateColor: map.gateColor
+	};
+	var newTile, newLine;
+	var l = map.data.length;
+	for (var i = 0; i <l; i++) {
+		var line = map.data[i];
+		var lineL = line.length;
+		newLine = [];
+		for (var j = 0; j < lineL; j++) {
+		var tile = map.data[i][j];
 
-	function getStartX(w){
-		return ($('#gameCanvas').innerWidth() - w*tileSize)/2;
-	}
-	function getStartY(h){
-		return ($('#gameCanvas').innerHeight() - h*tileSize)/2;
-	}
+			switch (tile) {
+				case "X":
+				newTile = new Tile ("wall", j, i);
+				break;
 
-	function parseMap(map){
-		world = {
-			height:  map.data.length,
-			width:  map.data[0].length,
-			data: []
-		};
-		var newTile, newLine;
-		var l = map.data.length;
-		for (var i = 0; i <l; i++) {
-			var line = map.data[i];
-			var lineL = line.length;
-			newLine = [];
+				case ".":
+				newTile = new Tile ("open", j, i);
+				break;	
 
-			for (var j = 0; j < lineL; j++) {
-				var tile = map.data[i][j];
+				case "o":
+				newTile = new Tile ("pellet", j, i);
+				break;
 
-				switch (tile) {
-					case "X":
-					newTile = new Tile ("wall", j, i);
-					break;
+				case "O":
+				newTile = new Tile ("booster", j ,i);
+				break;
 
-					case ".":
-					newTile = new Tile ("open", j, i);
-					break;	
+				case "G":
+				newTile = new Tile("gate",j,i);
+				break;
 
-					case "o":
-					newTile = new Tile ("pellet", j, i);
-					break;
-
-					case "O":
-					newTile = new Tile ("booster", j ,i);
-					break;
-
-					case "G":
-					newTile = new Tile("gate",j,i);
-					break;
-
-					case "S":
-					newTile = new Tile("start",j,i);
-				}
-				newLine.push(newTile);
+				case "S":
+				newTile = new Tile("start",j,i);
 			}
-			world.data.push(newLine);
+			newLine.push(newTile);
 		}
-		return world;
+		world.data.push(newLine);
 	}
+	return world;
+}
 
 function getTile(posX,posY){
+	//gets tile by grid position
 	if (tileExists(posX,posY)){
 		return world.data[posY][posX];	
 	}
@@ -141,6 +141,21 @@ function tileExists(posX,posY){
 	if (posX < 0 || posY < 0 || posX > world.data[0].length-1 || posY > world.data.length -1) return false;
 
 	return true;
+}
+
+function insertTile(tile, redrawTile){
+	world.data[tile.posY][tile.posX] = tile;
+
+	if (redrawTile){
+		for (var i =0; i<3; i++){
+			for (var j=0; j<3; j++){
+				if (tileExists(tile.posX+j-1, tile.posY+i-1)){
+					var tempTile = new Tile(world.data[tile.posY+i-1][tile.posX+j-1].type, tile.posX+j-1, tile.posY+i-1);	
+					drawTile(tempTile);
+				}
+			}
+		}
+	}
 }
 
 function upper(tile){
@@ -172,6 +187,7 @@ function tileBlocked(tile){
 }
 
 function isolatedTile(tile) {
+	//check if tile has no wall around
 	return (!isWall(upper(tile)) && !isWall(lower(tile)) && !isWall(left(tile)) && !isWall(right(tile)));
 }
 
@@ -187,6 +203,12 @@ function isHorizontalWall(tile) {
 		if (!isWall(upper(tile)) || !isWall(lower(tile))) return true;
 	}
 	return false;
+}
+
+function deleteTileGraphic(x,y,tile){
+	ctx.fillStyle=world.bgColor;
+	ctx.clearRect(x,y,tileSize,tileSize);
+	//ctx.fill();
 }
 
 function drawVerticalWall(x,y,tile){
@@ -390,8 +412,8 @@ function drawCornerTile(x,y,tile){
 }
 
 function drawWallTile(x,y, tile){
-	ctx.strokeStyle = "rgb(0,34,255)";
-	ctx.fillStyle = "rgb(0,34,255)";
+	ctx.strokeStyle = world.wallColor;
+	//ctx.fillStyle = "rgb(0,34,255)";
 	if (tileBlocked(tile)){
 		drawCorner(x,y,tile);
 	} else if (isolatedTile(tile)){
@@ -413,7 +435,7 @@ function drawWallTile(x,y, tile){
 function drawPelletTile(x,y){
 	x = x+tileSize/2;
 	y = y+tileSize/2;
-	ctx.fillStyle= "rgb(255,255,0)";
+	ctx.fillStyle= world.pelletColor;
 	ctx.beginPath();
 	ctx.arc(x,y,tileSize/10, 0, Math.PI *2, true);
 	ctx.closePath();
@@ -423,7 +445,7 @@ function drawPelletTile(x,y){
 function drawBoosterTile(x,y){
 	x = x+tileSize/2;
 	y = y+tileSize/2;
-	ctx.fillStyle= "rgb(255,60,0)";
+	ctx.fillStyle = world.boosterColor;
 	ctx.beginPath();
 	ctx.arc(x,y,tileSize/5, 0, Math.PI *2, true);
 	ctx.closePath();
@@ -431,7 +453,7 @@ function drawBoosterTile(x,y){
 }
 
 function drawGateTile(x,y,tile){
-	ctx.fillStyle = "rgba(255,255,255, 0.5)";
+	ctx.fillStyle = world.gateColor;
 	if (isWall(left(tile)) || isWall(right(tile))){
 		ctx.fillRect(x, y+tileSize/3, tileSize, tileSize/3);
 	}
@@ -441,42 +463,45 @@ function drawGateTile(x,y,tile){
 
 function drawWorld(world) {
 	var x,y, row;
-	console.log(world);
 	worldL = world.data.length;
-	ctx.fillStyle= "rgb(0,0,0)";
+	ctx.fillStyle= world.bgColor;
 	ctx.fillRect(0,0,$('#gameCanvas').width(), $('#gameCanvas').height());
 	for (var i = 0; i < worldL; i++){
-		y = getStartY(world.height)+i*tileSize;
 		row = world.data[i].length;
 		for (var j = 0; j < row; j++) {
-			x = getStartX(world.width) + j * tileSize;
 			var tile = world.data[i][j];
-			switch (tile.type) {
-				case "open":
-				break;
-
-				case "wall":
-				drawWallTile(x,y, tile);
-				break;
-
-				case "pellet":
-				drawPelletTile(x,y);
-				break;
-
-				case "booster":
-				drawBoosterTile(x,y);
-				break;
-
-				case "gate":
-				drawGateTile(x,y,tile);
-				break;
-
-			}
+			drawTile(tile);
 		}
-
 	}
 }
 
+
+function drawTile(tile){
+	x = getStartX(world.width) + tile.posX * tileSize;
+	y = getStartY(world.height)+ tile.posY*tileSize;
+	deleteTileGraphic(x,y,tile);
+	switch (tile.type) {
+		case "open":
+		break;
+
+		case "wall":
+		drawWallTile(x,y, tile);
+		break;
+
+		case "pellet":
+		drawPelletTile(x,y);
+		break;
+
+		case "booster":
+		drawBoosterTile(x,y);
+		break;
+
+		case "gate":
+		drawGateTile(x,y,tile);
+		break;
+
+	}
+}
 
 $(window).load(function(){
 	world = parseMap(map);
@@ -538,6 +563,7 @@ function startEditor(){
 	var ctxed = editor.getContext('2d');
 	
 	var action = false;
+	var undoStack = [];
 
 	var beforePreview = false;
 
@@ -558,7 +584,6 @@ function startEditor(){
 		mousePos = getMousePos(editor,e);
 		var tile = getTileAt(mousePos.x, mousePos.y);
 		var redraw = false; //if redraw needed
-		console.log(tile);
 		if (tile && (typeof activeTile ==='undefined' || tile.posX !== activeTile.posX || tile.posY !== activeTile.posY)) {
 			activeTile = tile;
 			drawEditor(activeTile);
@@ -567,29 +592,37 @@ function startEditor(){
 				if (beforePreview){
 					//restoring previewed tile
 					if (world.data[beforePreview.posY][beforePreview.posX].type !== beforePreview.type){
-						world.data[beforePreview.posY][beforePreview.posX] = new Tile (beforePreview.type, beforePreview.posX, beforePreview.posY);
-						redraw = true;
+						insertTile(new Tile (beforePreview.type, beforePreview.posX, beforePreview.posY), true);
 					}
 				}
 				var newT = action();
 				if (activeTile.type !== newT.type){
 					//drawing preview tile
 					beforePreview = activeTile;
-					world.data[activeTile.posY][activeTile.posX] = new Tile (newT.type, newT.posX, newT.posY);
-					redraw = true;
+					insertTile(new Tile (newT.type, newT.posX, newT.posY), true);
 				}
-				if (redraw) drawWorld(world);
 			}
 		}
 	});
 
 	editor.addEventListener('click', function(e){
-		if (!action) return false;
-		world.data[activeTile.posY][activeTile.posX] = action();//new Tile ("wall", activeTile.posX, activeTile.posY);
-		drawWorld(world);
+		if (!action || activeTile.type === action().type) return false;
+		activeTile = action();
+		undoStack.push(new Tile(beforePreview.type, beforePreview.posX, beforePreview.posY));
+		insertTile(new Tile(activeTile.type, activeTile.posX, activeTile.posY), true);//new Tile ("wall", activeTile.posX, activeTile.posY);
 		beforePreview = false;
 	});
 
+	$('#undoButton').css({display: 'inline'});
+
+	$(document).on('click','#undoButton', function(e){
+		if (undoStack.length) {
+			var oldTile = undoStack.pop();
+			console.log(oldTile);
+			insertTile(oldTile);
+			drawWorld(world);
+		}
+	});
 
 }
 
