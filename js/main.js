@@ -52,8 +52,8 @@ $(document).ready(function() {
 var wHeight = $(window).innerHeight();
 var wWidth = $(window).innerWidth();
 function getTileSize(map) {
-	var cW = $('#gameCanvas').innerWidth();	
-	var cH = $('#gameCanvas').innerHeight();
+	var cW = $('#mapCanvas').innerWidth();	
+	var cH = $('#mapCanvas').innerHeight();
 	if (cW/map.width<cH/map.data.length){
 		console.log(cW/map.data[0].length);
 		return Math.floor(cW/map.data[0].length);
@@ -62,17 +62,17 @@ function getTileSize(map) {
 }
 var tileSize = getTileSize(map);
 console.log(tileSize);
-var ctx = document.getElementById('gameCanvas').getContext('2d');
+var ctx = document.getElementById('mapCanvas').getContext('2d');
 function Tile (tileInfo,posX,posY) {
 	this.type = tileInfo;
 	this.posX = posX;
 	this.posY = posY;
 }
-function getStartX(w){
-	return ($('#gameCanvas').innerWidth() - w*tileSize)/2;
+function getStartX(){
+	return ($('#mapCanvas').innerWidth() - world.data[0].length*tileSize)/2;
 }
-function getStartY(h){
-	return ($('#gameCanvas').innerHeight() - h*tileSize)/2;
+function getStartY(){
+	return ($('#mapCanvas').innerHeight() - world.data.length*tileSize)/2;
 }
 
 function parseMap(map){
@@ -117,7 +117,8 @@ function parseMap(map){
 				break;
 
 				case "S":
-				newTile = new Tile("start",j,i);
+				newTile = new Tile("open",j,i);
+				world.playerStart = {x:j,y:i};
 			}
 			newLine.push(newTile);
 		}
@@ -155,6 +156,26 @@ function insertTile(tile, redrawTile){
 				}
 			}
 		}
+	}
+}
+
+function checkDirection(tile, direction) {
+	switch(direction){
+		case 'up':
+		return upper(tile);
+		break;
+
+		case 'down':
+		return lower(tile);
+		break;
+
+		case 'right':
+		return right(tile);
+		break;
+
+		case 'left':
+		return left(tile);
+		break;
 	}
 }
 
@@ -208,7 +229,6 @@ function isHorizontalWall(tile) {
 function deleteTileGraphic(x,y,tile){
 	ctx.fillStyle=world.bgColor;
 	ctx.clearRect(x,y,tileSize,tileSize);
-	//ctx.fill();
 }
 
 function drawVerticalWall(x,y,tile){
@@ -465,7 +485,7 @@ function drawWorld(world) {
 	var x,y, row;
 	worldL = world.data.length;
 	ctx.fillStyle= world.bgColor;
-	ctx.fillRect(0,0,$('#gameCanvas').width(), $('#gameCanvas').height());
+	ctx.fillRect(0,0,$('#mapCanvas').width(), $('#mapCanvas').height());
 	for (var i = 0; i < worldL; i++){
 		row = world.data[i].length;
 		for (var j = 0; j < row; j++) {
@@ -477,8 +497,8 @@ function drawWorld(world) {
 
 
 function drawTile(tile){
-	x = getStartX(world.width) + tile.posX * tileSize;
-	y = getStartY(world.height)+ tile.posY*tileSize;
+	x = getStartX() + tile.posX * tileSize;
+	y = getStartY()+ tile.posY*tileSize;
 	deleteTileGraphic(x,y,tile);
 	switch (tile.type) {
 		case "open":
@@ -508,21 +528,18 @@ $(window).load(function(){
 	drawWorld(world);
 
 	$(document).on('click','#editor', startEditor);
+	$(document).on('click','#startButton', startGame);
 	//startGame();
 });
 
 $(window).resize(function(){
 	wHeight = $(window).innerHeight();
 	wWidth = $(window).innerWidth();
-	//$('#gameCanvas').css({'width':'100%', 'height':'100%'});
-	//tileSize = $('#gameCanvas').innerHeight()/map.height;
+	//$('#mapCanvas').css({'width':'100%', 'height':'100%'});
+	//tileSize = $('#mapCanvas').innerHeight()/map.height;
 	//world = parseMap(map);
 	//drawWorld(world);
 });
-
-function startGame() {
-
-}
 
 function getMousePos(c, e) {
     var rect = c.getBoundingClientRect();
@@ -533,13 +550,22 @@ function getMousePos(c, e) {
 }
 
 function getTileAt(x,y) {
-	return getTile(Math.floor((x-getStartX(world.width))/tileSize), Math.floor((y-getStartY(world.height))/tileSize));
+	return getTile(Math.floor((x-getStartX())/tileSize), Math.floor((y-getStartY())/tileSize));
+}
+
+function getTilePosition(tile){
+	return {x:tile.posX*tileSize + getStartX(), y:tile.posY*tileSize + getStartY(0)};
+}
+
+function getTileCenter(tile){
+	var pos = getTilePosition(tile);
+	return {x:pos.x+tileSize/2, y: pos.y +tileSize/2};
 }
 
 function drawEditor(tile) {
 	var ctxed = document.getElementById('editorCanvas').getContext('2d');
-	var x = tile.posX*tileSize + getStartX(world.width);
-	var y = tile.posY*tileSize + getStartY(world.height);
+	var x = tile.posX*tileSize + getStartX();
+	var y = tile.posY*tileSize + getStartY();
 	ctxed.clearRect(0,0,$('#editorCanvas').innerWidth(), $('#editorCanvas').innerHeight());
 	ctxed.fillStyle="rgba(255,255,255,0.5)";
 	ctxed.clearRect(0,0,editor.width, editor.height);
@@ -550,16 +576,17 @@ function startEditor(){
 	$('#editor').html('Close Editor');
 	$(document).off('click','#editor');
 	$(document).on('click', '#editor', closeEditor);
+	$('#startButton').css({display:'none'});
 
 	TweenLite.to('aside', 0.5, {left:0});
 	var mousePos;
 	var activeTile;
 	var editor = document.createElement("canvas");
 	editor.id = "editorCanvas";
-	editor.height = $('#gameCanvas').innerHeight();
-	editor.width = $('#gameCanvas').innerWidth();
+	editor.height = $('#mapCanvas').innerHeight();
+	editor.width = $('#mapCanvas').innerWidth();
 	document.body.appendChild(editor);
-	$('#editorCanvas').css({'position':'absolute','left':$('#gameCanvas').offset().left, 'top':$('#gameCanvas').offset().top});
+	$('#editorCanvas').css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
 	var ctxed = editor.getContext('2d');
 	
 	var action = false;
@@ -631,7 +658,164 @@ function closeEditor() {
 	$(document).off('click','#editor');
 	$('#editor').html('Editor');
 	$(document).on('click','#editor', startEditor);
+	$('#startButton').css({'display': 'inline'});
+	$('#undoButton').css({'display':'none'});
 	document.body.removeChild(document.getElementById('editorCanvas'));
+}
+
+function startGame() {
+	
+	$('.options').css({display:'none'});
+
+	var game = document.createElement("canvas");
+	game.id = "gameCanvas";
+	game.height = $('#mapCanvas').innerHeight();
+	game.width = $('#mapCanvas').innerWidth();
+	document.body.appendChild(game);
+	$('#gameCanvas').css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
+	var gc = game.getContext('2d');
+
+	var lastTime = Date.now();
+
+	var player = {
+		x:world.playerStart.x*tileSize+getStartX()+tileSize/2,
+		y:world.playerStart.y*tileSize+getStartY()+tileSize/2,
+		tile: world.playerStart,
+		speed: 160,
+		moving: false,
+		nextMove: false
+	};
+
+	document.addEventListener('keydown', function(event){
+		switch (event.keyCode) {
+			case 37:
+				changeMovement('left');
+				break;
+			case 38:
+				changeMovement('up');
+				break;
+			case 39:
+				changeMovement('right');
+				break;
+			case 40:
+				changeMovement('down');
+				break;
+		}
+	});
+
+	function inTileCenter(x,y,tile, tolerance){
+		tolerance = typeof tolerance !== 'undefined' ? tolerance : 0;
+		tolerance = tolerance*tileSize;
+		var pos = getTilePosition(tile);
+		var c = getTileCenter(tile);
+
+		if ((Math.round(x)- tolerance <= Math.round(c.x) + tolerance && Math.round(x) + tolerance >= Math.round(c.x) - tolerance) && (Math.round(y)-tolerance <= Math.round(c.y) + tolerance && Math.round(y) + tolerance >= Math.round(c.y) - tolerance)) {
+			return true;
+		}
+		return false;
+	}
+
+	function changeMovement(direction){
+		player.nextMove = direction;
+	}
+
+	function oppositeDirection(direction){
+		if (direction == 'up') {
+			return 'down';
+		} else if (direction == 'down') {
+			return 'up';
+		} else if (direction == ' left') {
+			return 'right';
+		} else if (direction == 'right'){
+			return 'lfet';
+		}
+		return false;
+
+	}
+
+	function main() {
+		var now = Date.now();
+		var dt = (now - lastTime) / 1000.0;
+
+		update(dt);
+		render();
+		//removal();
+
+		lastTime = now;
+		requestAnimFrame(main);
+	};
+
+	function update(dt) {
+		
+
+
+		
+		updateEntity(player, dt);
+		if (player.tile.type === 'pellet' || player.tile.type === 'booster') removePellet(player.tile);
+	}
+
+	function updateEntity(entity, dt) {
+		entity.tile = getTileAt(player.x, player.y);
+
+		if (inTileCenter(entity.x, entity.y, entity.tile, 0.03)) {
+				
+				if (isWall(checkDirection(entity.tile, entity.moving))){
+					entity.moving= false;
+				}
+
+				if(!isWall(checkDirection(entity.tile, entity.nextMove))) {
+					entity.moving = entity.nextMove;
+				}
+
+		}
+		
+
+		if (entity.moving) moveEntity(entity);
+
+		function moveEntity(entity){
+
+			switch (entity.moving) {
+				case 'up':
+					entity.y -= entity.speed*dt;
+					break;
+
+				case 'down':
+					entity.y += entity.speed*dt;
+					break;
+
+				case 'left':
+					entity.x -= entity.speed*dt;
+					break;
+
+				case 'right':
+					entity.x += entity.speed*dt;
+					break;
+			}
+		}
+	}
+
+	function removePellet(tile) {
+		var newT = new Tile('open', tile.posX, tile.posY);
+		world.data[tile.posY][tile.posX] = newT;
+		drawTile(newT);
+		player.tile = newT;
+	}
+
+	function render() {
+		console.log(player.x, player.y);
+		gc.clearRect(0,0,game.width, game.height);
+		drawPacman(player.x, player.y);
+	}
+
+	function drawPacman(x,y){
+		gc.fillStyle= world.pelletColor;
+		gc.beginPath();
+		gc.arc(x,y,tileSize*0.6, 0, Math.PI *2, true);
+		gc.closePath();
+		gc.fill();
+	}
+
+	main();
 }
 
 });

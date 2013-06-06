@@ -4,7 +4,7 @@ html, body {
 	overflow: hidden;
 }
 
-canvas#gameCanvas {
+canvas#mapCanvas {
 	width:800px;
 	height:600px;
 	margin: 50px auto;
