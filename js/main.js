@@ -51,31 +51,33 @@ var map = {
 $(document).ready(function() {
 var wHeight = $(window).innerHeight();
 var wWidth = $(window).innerWidth();
+var ctx = document.getElementById('mapCanvas').getContext('2d');
+var cW = $('#mapCanvas').innerWidth();	
+var cH = $('#mapCanvas').innerHeight();
+var tileSize = getTileSize(map);
+var startX, startY;
+
 function getTileSize(map) {
-	var cW = $('#mapCanvas').innerWidth();	
-	var cH = $('#mapCanvas').innerHeight();
-	if (cW/map.width<cH/map.data.length){
-		console.log(cW/map.data[0].length);
+	//calculates tile dimensions
+	if (cW/map.data[0].length<cH/map.data.length){
 		return Math.floor(cW/map.data[0].length);
 	}
 	return Math.floor(cH/map.data.length);
 }
-var tileSize = getTileSize(map);
-console.log(tileSize);
-var ctx = document.getElementById('mapCanvas').getContext('2d');
 function Tile (tileInfo,posX,posY) {
 	this.type = tileInfo;
 	this.posX = posX;
 	this.posY = posY;
 }
 function getStartX(){
-	return ($('#mapCanvas').innerWidth() - world.data[0].length*tileSize)/2;
+	return (cW - world.data[0].length*tileSize)/2;
 }
 function getStartY(){
-	return ($('#mapCanvas').innerHeight() - world.data.length*tileSize)/2;
+	return (cH - world.data.length*tileSize)/2;
 }
 
 function parseMap(map){
+	//parses map from a string
 	world = {
 		height:  map.data.length,
 		width:  map.data[0].length,
@@ -137,7 +139,7 @@ function getTile(posX,posY){
 
 function tileExists(posX,posY){
 	//check if tile out of world bounds
-	if (isNaN(posX) || isNaN(posY) || typeof posX =='undefined' || typeof posY == 'undefined') return false;
+	if (isNaN(posX) || isNaN(posY) || typeof posX ==undefined || typeof posY == undefined) return false;
 
 	if (posX < 0 || posY < 0 || posX > world.data[0].length-1 || posY > world.data.length -1) return false;
 
@@ -485,7 +487,7 @@ function drawWorld(world) {
 	var x,y, row;
 	worldL = world.data.length;
 	ctx.fillStyle= world.bgColor;
-	ctx.fillRect(0,0,$('#mapCanvas').width(), $('#mapCanvas').height());
+	ctx.fillRect(0,0,cW, cH);
 	for (var i = 0; i < worldL; i++){
 		row = world.data[i].length;
 		for (var j = 0; j < row; j++) {
@@ -497,8 +499,8 @@ function drawWorld(world) {
 
 
 function drawTile(tile){
-	x = getStartX() + tile.posX * tileSize;
-	y = getStartY()+ tile.posY*tileSize;
+	x = startX + tile.posX * tileSize;
+	y = startY+ tile.posY*tileSize;
 	deleteTileGraphic(x,y,tile);
 	switch (tile.type) {
 		case "open":
@@ -525,6 +527,8 @@ function drawTile(tile){
 
 $(window).load(function(){
 	world = parseMap(map);
+	startX = getStartX();
+	startY = getStartY();
 	drawWorld(world);
 
 	$(document).on('click','#editor', startEditor);
@@ -550,11 +554,11 @@ function getMousePos(c, e) {
 }
 
 function getTileAt(x,y) {
-	return getTile(Math.floor((x-getStartX())/tileSize), Math.floor((y-getStartY())/tileSize));
+	return getTile(Math.floor((x-startX)/tileSize), Math.floor((y-startY)/tileSize));
 }
 
 function getTilePosition(tile){
-	return {x:tile.posX*tileSize + getStartX(), y:tile.posY*tileSize + getStartY(0)};
+	return {x:tile.posX*tileSize + startX, y:tile.posY*tileSize + getStartY(0)};
 }
 
 function getTileCenter(tile){
@@ -564,8 +568,8 @@ function getTileCenter(tile){
 
 function drawEditor(tile) {
 	var ctxed = document.getElementById('editorCanvas').getContext('2d');
-	var x = tile.posX*tileSize + getStartX();
-	var y = tile.posY*tileSize + getStartY();
+	var x = tile.posX*tileSize + startX;
+	var y = tile.posY*tileSize + startY;
 	ctxed.clearRect(0,0,$('#editorCanvas').innerWidth(), $('#editorCanvas').innerHeight());
 	ctxed.fillStyle="rgba(255,255,255,0.5)";
 	ctxed.clearRect(0,0,editor.width, editor.height);
@@ -678,8 +682,8 @@ function startGame() {
 	var lastTime = Date.now();
 
 	var player = {
-		x:world.playerStart.x*tileSize+getStartX()+tileSize/2,
-		y:world.playerStart.y*tileSize+getStartY()+tileSize/2,
+		x:world.playerStart.x*tileSize+startX+tileSize/2,
+		y:world.playerStart.y*tileSize+startY+tileSize/2,
 		tile: world.playerStart,
 		speed: 160,
 		moving: false,
