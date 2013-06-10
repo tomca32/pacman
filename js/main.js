@@ -861,7 +861,7 @@ function startGame() {
 	function updateEntity(entity, dt) {
 		entity.tile = getTileAt(entity.x, entity.y);
 
-		if (inTileCenter(entity.x, entity.y, entity.tile, 0.006 * player.speed/tileSize)) {
+		if (inTileCenter(entity.x, entity.y, entity.tile, 0.007 * player.speed/tileSize)) {
 				
 				if (isWall(checkDirection(entity.tile, entity.moving))){
 					entity.moving= false;
@@ -906,7 +906,6 @@ function startGame() {
 		//removal();
 
 		lastTime = now;
-		requestAnimFrame(main);
 
 		if (resize){
 			var oldTileSize = tileSize;
@@ -918,6 +917,8 @@ function startGame() {
 			player.speed = tileSize*world.speed;
 			resize = false;
 		}
+
+		requestAnimFrame(main);
 	}
 	main();
 }
@@ -926,7 +927,6 @@ $(window).load(function(){
 	world = parseMap(map);
 	startX = getStartX();
 	startY = getStartY();
-	console.log(startX);
 	drawWorld(world);
 
 	$(document).on('click','#editor', startEditor);
