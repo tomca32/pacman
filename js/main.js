@@ -1,6 +1,3 @@
-var $ = jQuery;
-var TweenLite = TweenLite;
-
 var requestAnimFrame = (function() {
 	return window.requestAnimationFrame       ||
 	window.webkitRequestAnimationFrame ||
@@ -15,13 +12,14 @@ function getMousePos(c, e) {
     var rect = c.getBoundingClientRect();
     return {x: e.clientX - rect.left,y: e.clientY - rect.top};
 }
-var world;
-var map = {
+var world,
+	map = {
 	bgColor: "rgb(0,0,0)",
 	wallColor: "rgb(0,34,255)",
 	pelletColor: "rgb(255,255,0)",
 	boosterColor: "rgb(255,60,0)",
 	gateColor: "rgba(255,255,255, 0.5)",
+	speed: 10,
 	data: [
 	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 	"XooooooooooooXXooooooooooooX", 
@@ -80,11 +78,15 @@ function tileExists(posX,posY){
 $(document).ready(function() {
 var wHeight = $(window).innerHeight(),
 		wWidth = $(window).innerWidth(),
-		ctx = document.getElementById('mapCanvas').getContext('2d'),
-		cW = $('#mapCanvas').innerWidth(),	
-		cH = $('#mapCanvas').innerHeight(),
-		tileSize = getTileSize(map, cW, cH),
-		startX, startY;
+		gameArea = document.getElementById('game'),
+		mapCanvas = document.getElementById('mapCanvas'),
+		ctx = mapCanvas.getContext('2d'),
+		startX, startY, cW, cH, tileSize, resize = false, gameInProgress = false;
+mapCanvas.width = wWidth * 0.9;
+mapCanvas.height = wHeight * 0.8;
+cW = mapCanvas.width;
+cH = mapCanvas.height;
+tileSize = getTileSize(map, cW, cH);
 
 
 function Tile (tileInfo,posX,posY) {
@@ -107,6 +109,7 @@ function parseMap(map){
 		pelletColor: map.pelletColor,
 		boosterColor: map.boosterColor,
 		wallColor: map.wallColor,
+		speed: map.speed,
 		gateColor: map.gateColor
 	};
 	var newTile, newLine, i, j, line, lineL, tile,
@@ -170,7 +173,7 @@ function getTileAt(x,y) {
 
 function getTilePosition(tile){
 	//gets tile x,y coords
-	return {x:tile.posX*tileSize + startX, y:tile.posY*tileSize + getStartY(0)};
+	return {x:tile.posX*tileSize + startX, y:tile.posY*tileSize + startY};
 }
 
 function getTileCenter(tile){
@@ -621,9 +624,9 @@ function drawPacman(player, gc){
 
 		if (player.moving) {
 			if (player.closing){
-				player.frame-=0.001*player.speed;
+				player.frame-=0.02*player.speed/tileSize;
 			} else {
-				player.frame += 0.001*player.speed;
+				player.frame += 0.02*player.speed/tileSize;
 			}
 			
 			if (player.frame >= 1) {
@@ -658,7 +661,7 @@ function startEditor(){
 	editor.id = "editorCanvas";
 	editor.height = $('#mapCanvas').innerHeight();
 	editor.width = $('#mapCanvas').innerWidth();
-	document.body.appendChild(editor);
+	gameArea.appendChild(editor);
 
 	function closeEditor() {
 		//Closing editor animation
@@ -798,6 +801,19 @@ function centerEntity(entity){
 	entity.y = c.y;
 }
 
+function resizeMap() {
+	wHeight = $(window).innerHeight();
+	wWidth = $(window).innerWidth();
+	mapCanvas.width = wWidth * 0.9;
+	mapCanvas.height = wHeight * 0.8;
+	cW = mapCanvas.width;
+	cH = mapCanvas.height;
+	tileSize = getTileSize(world, cW, cH);
+	console.log(tileSize);
+	startX = getStartX();
+	startY = getStartY();
+	drawWorld(world);
+}
 
 function startGame() {
 	//GAME SETUP
@@ -808,19 +824,20 @@ function startGame() {
 				x:world.playerStart.x*tileSize+startX+tileSize/2,
 				y:world.playerStart.y*tileSize+startY+tileSize/2,
 				tile: world.playerStart,
-				speed: 1000,
+				speed: tileSize*world.speed,
 				orientation: 'right',
 				frame: 0,
 				moving: false,
 				closing:false,
 				nextMove: false
 			};
+	gameInProgress = true;
 	$('.options').css({display:'none'});
 
 	game.id = "gameCanvas";
-	game.height = $('#mapCanvas').innerHeight();
-	game.width = $('#mapCanvas').innerWidth();
-	document.body.appendChild(game);
+	game.height = mapCanvas.height;
+	game.width = mapCanvas.width;
+	gameArea.appendChild(game);
 	$('#gameCanvas').css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
 
 	document.addEventListener('keydown', function(event){
@@ -844,7 +861,7 @@ function startGame() {
 	function updateEntity(entity, dt) {
 		entity.tile = getTileAt(entity.x, entity.y);
 
-		if (inTileCenter(entity.x, entity.y, entity.tile, 0.0003 * player.speed)) {
+		if (inTileCenter(entity.x, entity.y, entity.tile, 0.006 * player.speed/tileSize)) {
 				
 				if (isWall(checkDirection(entity.tile, entity.moving))){
 					entity.moving= false;
@@ -890,6 +907,17 @@ function startGame() {
 
 		lastTime = now;
 		requestAnimFrame(main);
+
+		if (resize){
+			var oldTileSize = tileSize;
+			resizeMap();
+			game.height = mapCanvas.height;
+			game.width = mapCanvas.width;
+			player.x = getTilePosition(player.tile).x + tileSize/2;
+			player.y = getTilePosition(player.tile).y + tileSize/2;
+			player.speed = tileSize*world.speed;
+			resize = false;
+		}
 	}
 	main();
 }
@@ -898,6 +926,7 @@ $(window).load(function(){
 	world = parseMap(map);
 	startX = getStartX();
 	startY = getStartY();
+	console.log(startX);
 	drawWorld(world);
 
 	$(document).on('click','#editor', startEditor);
@@ -906,12 +935,11 @@ $(window).load(function(){
 });
 
 $(window).resize(function(){
-	wHeight = $(window).innerHeight();
-	wWidth = $(window).innerWidth();
-	//$('#mapCanvas').css({'width':'100%', 'height':'100%'});
-	//tileSize = $('#mapCanvas').innerHeight()/map.height;
-	//world = parseMap(map);
-	//drawWorld(world);
+	if (gameInProgress) {
+		resize = true; //If game in progress, queue the resize after tick is done
+	} else {
+		resizeMap();
+	}
 });
 
 });

@@ -5,9 +5,7 @@ html, body {
 }
 
 canvas#mapCanvas {
-	width:800px;
-	height:600px;
-	margin: 50px auto;
+	margin: 20px auto;
 	background: black;
 	display: block;
 }
