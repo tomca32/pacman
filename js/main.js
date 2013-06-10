@@ -628,13 +628,13 @@ function drawPacman(player, gc){
 			
 			if (player.frame >= 1) {
 				player.closing = true;
-			} else if (player.frame <=0.12){ //magic number here!, doesn't display properly if set to 0
+			} else if (player.frame <=0){
 				player.closing = false;
 			}
 		}
 		//player.frame = 2;
 		beginArc = angle+(Math.PI/3)*player.frame;
-		endArc = angle-(Math.PI/3)*player.frame;
+		endArc = Math.PI*2 + angle -(Math.PI/3)*player.frame;
 		if(beginArc >= Math.PI*2) {
 			beginArc -= Math.PI*2;
 		} else if (endArc<=0) {
@@ -805,7 +805,7 @@ function startGame() {
 				tile: world.playerStart,
 				speed: 100,
 				orientation: 'right',
-				frame: 0.1,
+				frame: 0,
 				moving: false,
 				closing:false,
 				nextMove: false
