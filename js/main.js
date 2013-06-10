@@ -792,6 +792,11 @@ function inTileCenter(x,y,tile, tolerance){
 	return false;
 }
 
+function centerEntity(entity){
+	var c = getTileCenter(entity.tile);
+	entity.x = c.x;
+	entity.y = c.y;
+}
 
 
 function startGame() {
@@ -803,7 +808,7 @@ function startGame() {
 				x:world.playerStart.x*tileSize+startX+tileSize/2,
 				y:world.playerStart.y*tileSize+startY+tileSize/2,
 				tile: world.playerStart,
-				speed: 100,
+				speed: 1000,
 				orientation: 'right',
 				frame: 0,
 				moving: false,
@@ -839,10 +844,11 @@ function startGame() {
 	function updateEntity(entity, dt) {
 		entity.tile = getTileAt(entity.x, entity.y);
 
-		if (inTileCenter(entity.x, entity.y, entity.tile, 0.03)) {
+		if (inTileCenter(entity.x, entity.y, entity.tile, 0.0003 * player.speed)) {
 				
 				if (isWall(checkDirection(entity.tile, entity.moving))){
 					entity.moving= false;
+					centerEntity(entity);
 				}
 
 				if(!isWall(checkDirection(entity.tile, entity.nextMove))) {
