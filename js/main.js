@@ -262,7 +262,6 @@ function drawUpRightCornerInner(x, y, gate) {
 	ctx.arc(x,y+tileSize,tileSize/3,Math.PI*3/2,0, false);
 	ctx.stroke();
 	if (gate) {
-		ctx.closePath();
 		ctx.fill();
 	}
 }
@@ -272,7 +271,6 @@ function drawUpLeftCornerInner (x, y, gate) {
 	ctx.arc(x+tileSize,y+tileSize,tileSize/3,Math.PI*3/2,Math.PI, true);
 	ctx.stroke();
 	if (gate) {
-		ctx.closePath();
 		ctx.fill();
 	}
 }
@@ -282,7 +280,6 @@ function drawDownRightCornerInner (x, y, gate) {
 	ctx.arc(x,y,tileSize/3,0,Math.PI/2, false);
 	ctx.stroke();	
 	if (gate) {
-		ctx.closePath();
 		ctx.fill();
 	}
 }
@@ -292,7 +289,6 @@ function drawDownLeftCornerInner (x, y, gate) {
 	ctx.arc(x+tileSize,y,tileSize/3,Math.PI,Math.PI/2, true);
 	ctx.stroke();
 	if (gate) {
-		ctx.closePath();
 		ctx.fill();
 	}
 }
@@ -343,6 +339,7 @@ function drawIsolatedWall(x,y){
 } 
 
 function drawLeftEnd(x,y) {
+	ctx.beginPath();
 	ctx.moveTo(x+tileSize,y+tileSize/3);
 	ctx.lineTo(x+tileSize/3, y+tileSize/3);
 	ctx.moveTo(x+tileSize,y+tileSize*2/3);
@@ -354,6 +351,7 @@ function drawLeftEnd(x,y) {
 }
 
 function drawRightEnd(x,y) {
+	ctx.beginPath();
 	ctx.moveTo(x,y+tileSize/3);
 	ctx.lineTo(x+tileSize*2/3, y+tileSize/3);
 	ctx.moveTo(x,y+tileSize*2/3);
@@ -365,22 +363,24 @@ function drawRightEnd(x,y) {
 }
 
 function drawTopEnd(x,y) {
+	ctx.beginPath();
 	ctx.moveTo(x+tileSize/3,y+tileSize);
 	ctx.lineTo(x+tileSize/3, y+tileSize/3);
 	ctx.moveTo(x+tileSize*2/3,y+tileSize);
 	ctx.lineTo(x+tileSize*2/3, y+tileSize/3);
-	ctx.stroke();
+	ctx.stroke();	
 	ctx.beginPath();
 	ctx.arc(x+tileSize/2, y+tileSize/3,tileSize/6,0, Math.PI,true);
 	ctx.stroke();	
 }
 
 function drawBottomEnd(x,y) {
+	ctx.beginPath();
 	ctx.moveTo(x+tileSize/3,y);
 	ctx.lineTo(x+tileSize/3, y+tileSize*2/3);
 	ctx.moveTo(x+tileSize*2/3,y);
 	ctx.lineTo(x+tileSize*2/3, y+tileSize*2/3);
-	ctx.stroke();
+	ctx.stroke();	
 	ctx.beginPath();
 	ctx.arc(x+tileSize/2, y+tileSize*2/3,tileSize/6,0, Math.PI,false);
 	ctx.stroke();	
@@ -418,11 +418,11 @@ function drawCornerTile(x,y,tile){
 }
 
 function drawVerticalWall(x,y,tile, gate){
-	ctx.beginPath();
 	if (!isWall(left(tile))){
 		if (gate && !isWall(right(tile))) {
 			ctx.fillRect(x+tileSize/3,y,tileSize/3, tileSize);
 		}
+		ctx.beginPath();
 		ctx.moveTo(x+tileSize/3, y);
 		ctx.lineTo(x+tileSize/3,y+tileSize);
 		ctx.stroke();
@@ -435,6 +435,7 @@ function drawVerticalWall(x,y,tile, gate){
 		}
 	}
 	if (!isWall(right(tile))){
+		ctx.beginPath();
 		ctx.moveTo(x+tileSize*2/3, y);
 		ctx.lineTo(x+tileSize*2/3,y+tileSize);
 		ctx.stroke();	
@@ -449,12 +450,11 @@ function drawVerticalWall(x,y,tile, gate){
 }
 
 function drawHorizontalWall(x,y,tile, gate){
-	ctx.beginPath();
 	if (!isWall(upper(tile))){
 		if (gate && !isWall(lower(tile))) {
 			ctx.fillRect(x,y+tileSize/3,tileSize, tileSize/3);
 		}
-
+		ctx.beginPath();
 		ctx.moveTo(x, y+tileSize/3);
 		ctx.lineTo(x+tileSize,y+tileSize/3);
 		ctx.stroke();
@@ -467,6 +467,7 @@ function drawHorizontalWall(x,y,tile, gate){
 		}
 	}
 	if (!isWall(lower(tile))){
+		ctx.beginPath();
 		ctx.moveTo(x, y+tileSize*2/3);
 		ctx.lineTo(x+tileSize,y+tileSize*2/3);
 		ctx.stroke();	
