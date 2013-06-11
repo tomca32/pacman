@@ -671,7 +671,7 @@ function startEditor(){
 		$(document).on('click','#editor', startEditor);
 		$('#startButton').css({'display': 'inline'});
 		$('#undoButton').css({'display':'none'});
-		document.body.removeChild(document.getElementById('editorCanvas'));
+		document.getElementById('game').removeChild(document.getElementById('editorCanvas'));
 	}
 	$('#editorCanvas').css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
 	$('#editor').html('Close Editor');
@@ -809,7 +809,6 @@ function resizeMap() {
 	cW = mapCanvas.width;
 	cH = mapCanvas.height;
 	tileSize = getTileSize(world, cW, cH);
-	console.log(tileSize);
 	startX = getStartX();
 	startY = getStartY();
 	drawWorld(world);
