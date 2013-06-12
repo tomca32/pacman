@@ -8,6 +8,11 @@ var requestAnimFrame = (function() {
 		window.setTimeout(callback, 1000 / 60);
 };
 }());
+
+DEBUG = {
+	SHOWGRID: true
+};
+
 function getMousePos(c, e) {
     var rect = c.getBoundingClientRect();
     return {x: e.clientX - rect.left,y: e.clientY - rect.top};
@@ -23,7 +28,7 @@ var world,
 	data: [
 	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 	"XooooooooooooXXooooooooooooX", 
-	"XOXXXXoXXXXXoXXoXXXXXoXXXXOX", 
+	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
 	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
 	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
 	"XooooooooooooooooooooooooooX", 
@@ -33,9 +38,9 @@ var world,
 	"XXXXXXoXXXXX.XX.XXXXXoXXXXXX", 
 	".....XoXXXXX.XX.XXXXXoX.....",
 	".....XoXX..........XXoX.....",
-	".....XoXX.XXXGGXXX.XXoX.....",
+	".....XoXX.XXX..XXX.XXoX.....",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
-	"T.....o...X......X...o.....T",
+	"T.....o...X..E...X...o.....T",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
 	".....XoXX.XXXXXXXX.XXoX.....",
 	".....XoXX.....S....XXoX.....",
@@ -44,7 +49,7 @@ var world,
 	"XooooooooooooXXooooooooooooX",
 	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX",
 	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX",
-	"XOooXXooooooo..oooooooXXooOX",
+	"XoooXXooooooo..oooooooXXoooX",
 	"XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
 	"XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
 	"XooooooXXooooXXooooXXooooooX",
@@ -105,6 +110,7 @@ function parseMap(map){
 	//parses map from a string
 	world = {
 		data: [],
+		pellets: 0,
 		bgColor: map.bgColor,
 		pelletColor: map.pelletColor,
 		boosterColor: map.boosterColor,
@@ -132,6 +138,7 @@ function parseMap(map){
 
 				case "o":
 				newTile = new Tile ("pellet", j, i);
+				world.pellets = world.pellets + 1;
 				break;
 
 				case "O":
@@ -149,6 +156,11 @@ function parseMap(map){
 				case "S":
 				newTile = new Tile("open",j,i);
 				world.playerStart = {x:j,y:i};
+				break;
+
+				case "E":
+				newTile = new Tile("open",j,i);
+				world.ghostStart = {x:j,y:i};
 				break;
 			}
 			newLine.push(newTile);
@@ -563,6 +575,16 @@ function drawTile(tile){
 	var x = startX + tile.posX * tileSize,
 			y = startY+ tile.posY*tileSize;
 	deleteTileGraphic(x,y,tile);
+	if (DEBUG.SHOWGRID) {
+		ctx.strokeStyle = "rgba(255,255,255,0.2)";
+		ctx.beginPath();
+		ctx.moveTo(x,y);
+		ctx.lineTo(x+tileSize, y);
+		ctx.lineTo(x+tileSize, y+tileSize);
+		ctx.lineTo(x, y+tileSize);
+		ctx.closePath();
+		ctx.stroke();
+	}
 	switch (tile.type) {
 		case "open":
 		break;
@@ -682,6 +704,35 @@ function drawPacman(player, gc){
 		gc.lineTo(x,y);
 		gc.closePath();
 		gc.fill();
+}
+
+function drawGhost(ghost, gc) {
+	gc.fillStyle = ghost.color;
+	var x = ghost.x,
+			y = ghost.y;
+	gc.beginPath();
+	gc.arc(x,y -tileSize/6, tileSize*0.6, 0, Math.PI, true);
+	gc.moveTo(x - tileSize*0.6, y-tileSize/4);
+	gc.lineTo(x- tileSize *0.6, y+ tileSize*0.6);
+	gc.lineTo(x- tileSize *0.4, y+ tileSize*0.4);
+	gc.lineTo(x- tileSize *0.2, y+ tileSize*0.6);
+	gc.lineTo(x, y+ tileSize*0.4);
+	gc.lineTo(x+ tileSize *0.2, y+ tileSize*0.6);
+	gc.lineTo(x+ tileSize *0.4, y+ tileSize*0.4);
+	gc.lineTo(x+ tileSize *0.6, y+ tileSize*0.6);
+	gc.lineTo(x+ tileSize *0.6, y- tileSize/4);
+	gc.closePath();
+	gc.fill();
+	gc.fillStyle="rgba(0,0,0,1)";
+	gc.beginPath();
+	
+	gc.arc(x-tileSize/3, y- tileSize/6, tileSize*0.15, 0, 2*Math.PI, true);
+	gc.closePath();
+	gc.fill();
+	gc.beginPath();
+	gc.arc(x+tileSize/3, y - tileSize/6, tileSize*0.15, 0, 2*Math.PI, true);
+	gc.closePath();
+	gc.fill();
 }
 
 //END DRAWING FUNCTIONS
@@ -831,8 +882,15 @@ function inTileCenter(x,y,tile, tolerance){
 
 function centerEntity(entity){
 	var c = getTileCenter(entity.tile);
-	entity.x = c.x;
-	entity.y = c.y;
+	if (entity.moving === 'up' || entity.moving === 'down'){
+		entity.x = c.x;
+	} else if (entity.moving === 'left' || entity.moving === 'right') {
+		entity.y = c.y;	
+	} else {
+		entity.x = c.x;
+		entity.y = c.y;
+	}
+	
 }
 
 function resizeMap() {
@@ -848,9 +906,14 @@ function resizeMap() {
 	drawWorld(world);
 }
 
-function getOpenNeighbours(tile, passGate) {
+function getValidNeighbours(tile, passGate, illegalTile) {
 	function valid(tile) {
 		if (tile) {
+			if (illegalTile){
+				if (illegalTile.posX === tile.posX && illegalTile.posY === tile.posY) {
+					return false;
+				}
+			}
 			return !isWall(tile, passGate);
 		}
 	}
@@ -872,21 +935,21 @@ function getOpenNeighbours(tile, passGate) {
 
 function path(world, actor, endTile) {
 	var grid = JSON.parse(JSON.stringify(world.data)), //cloning an object
-			oppositeTile = checkDirection(actor.tile, oppositeDirection(actor.orientation)), //tile in the opposite direction of ghost movement
 			nodes = grid.length * grid[0].length,
 			current, ret = [];
 	actor.tile.g = 0; //distance from start to node
 	actor.tile.h = distance(actor.tile, endTile); //distance from node to end
 	actor.tile.f = actor.tile.g + actor.tile.h; //total distance from start to end
-	actor.parent = false; //starting tile has no parent
+	actor.tile.par = false; //starting tile has no parent
 	var openList = [], closedList = [];
 	openList.push(actor.tile);
+	console.log(endTile);
 	while (openList.length) {
 
 		current = _.min (openList, function(t) {return t.f}); //finding node with minimum f (total distance to target) - underscore.js
 		if (current.posX === endTile.posX && current.posY === endTile.posY) {
 			//if reached target node
-			var curr = JSON.parse(JSON.stringify(current));
+			var curr = current;//JSON.parse(JSON.stringify(current));
 			while (curr.par){
 				ret.push(determineDirection(curr.par, curr));
 				curr = curr.par;
@@ -898,7 +961,7 @@ function path(world, actor, endTile) {
 		openList.splice(openList.indexOf(current),1); //removing from openList
 		closedList.push(current);
 
-		var neighbours = getOpenNeighbours(current, actor.isGhost);
+		var neighbours = getValidNeighbours(current, actor.isGhost);
 		var nLength = neighbours.length;
 		for (var i = 0; i < nLength; i=i+1) {
 			var neighbour = neighbours[i];
@@ -913,6 +976,7 @@ function path(world, actor, endTile) {
 				//if node visited for the first time - underscore.js
 				gBest = true;
 				neighbour.h = distance (neighbour, endTile);
+				neighbour.par = false;
 				openList.push(neighbour);
 			} else if (g < neighbour.g) {
 					gBest = true;
@@ -929,12 +993,13 @@ function path(world, actor, endTile) {
 		}
 
 	} //end while
-
+	return [];
 }
 
 function startGame() {
 	//GAME SETUP
 	var game = document.createElement("canvas"),
+			gameOver = false,
 			gc = game.getContext('2d'),
 			lastTime = Date.now(),
 			player = {
@@ -948,6 +1013,34 @@ function startGame() {
 				moving: false,
 				closing:false,
 				nextMove: false
+			},
+			ghost = {
+				isGhost: true,
+				color: "rgba(255,0,0,1)",
+				x:world.ghostStart.x * tileSize+startX+tileSize/2,
+				y:world.ghostStart.y * tileSize+startY+tileSize/2,
+				tile: getTile(world.ghostStart.x, world.ghostStart.y),
+				oldTile: getTile(world.ghostStart.x, world.ghostStart.y),
+				speed: tileSize*world.speed,
+				orientation: 'right',
+				moving: false,
+				nextMove: false,
+				toStep: 5,
+				path: [],
+				updatePath: function() {
+					console.log(this);	
+					this.path = path(world, this, player.tile);
+					console.log(this.path);
+				},
+				init: function() {
+					this.updatePath();
+					this.toStep = 8;
+					this.step();
+				},
+				step: function() {
+					this.moving = _.first(this.path);
+					this.path = _.rest(this.path);
+				}
 			};
 	gameInProgress = true;
 	$('.options').css({display:'none'});
@@ -979,8 +1072,25 @@ function startGame() {
 	function updateEntity(entity, dt) {
 		entity.tile = getTileAt(entity.x, entity.y);
 
-		if (inTileCenter(entity.x, entity.y, entity.tile, 0.008 * player.speed/tileSize)) {
+		if (inTileCenter(entity.x, entity.y, entity.tile, 0.007 * entity.speed/tileSize)) {
 				
+			if (entity.isGhost) {
+				if (!(entity.tile.posX === entity.oldTile.posX && entity.tile.posY === entity.oldTile.posY)){
+					if (entity.toStep <= 0 || entity.path.length <1){
+						centerEntity(entity);
+						entity.init();
+					} else {
+						centerEntity(entity);
+						entity.step();
+					}
+
+					entity.toStep = entity.toStep - 1;
+					console.log('step');
+					entity.oldTile = entity.tile;
+					
+				}
+			} else {
+
 				if (isWall(checkDirection(entity.tile, entity.moving, !entity.isGhost))){
 					entity.moving = false;
 					centerEntity(entity);
@@ -990,6 +1100,7 @@ function startGame() {
 					entity.moving = entity.nextMove;
 					entity.orientation = entity.nextMove;
 				}
+			}
 		}
 		if (entity.moving) {
 			moveEntity(entity, dt);	
@@ -1006,14 +1117,33 @@ function startGame() {
 
 	function update(dt) {
 		updateEntity(player, dt);
+		updateEntity(ghost, dt);
 		if (player.tile.type === 'pellet' || player.tile.type === 'booster') {
+			world.pellets = world.pellets - 1;
 			removePellet(player.tile);
 		}
+
+		if (world.pellets < 1) {
+			gameOver = 'win';
+		} else if (player.tile.posX === ghost.tile.posX && player.tile.posY === ghost.tile.posY) {
+			gameOver = 'loser';
+		}
+		
+		
 	}
 
 	function render() {
 		gc.clearRect(0,0,game.width, game.height);
 		drawPacman(player, gc);
+		drawGhost(ghost,gc);
+	}
+
+	function end () {
+		if (gameOver === 'win') {
+			alert("YOU WIN");
+		} else {
+			alert("YOU SUCK!");
+		}
 	}
 
 	function main() {
@@ -1036,11 +1166,14 @@ function startGame() {
 			player.speed = tileSize*world.speed;
 			resize = false;
 		}
-
-		requestAnimFrame(main);
+		if (gameOver) {
+			end();
+		} else {
+			requestAnimFrame(main);	
+		}
 	}
-	console.log(path(world,player,getTile(1,1)));
 	main();
+	ghost.init();
 }
 
 $(window).load(function(){
