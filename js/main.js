@@ -158,6 +158,10 @@ function parseMap(map){
 	return world;
 }
 
+function distance (tile1, tile2) {
+	return Math.abs(tile1.posX - tile2.posX) + Math.abs(tile1.posY - tile2.posY);
+}
+
 function getTile(posX,posY){
 	//gets tile by grid position
 	if (tileExists(posX,posY)){
@@ -214,11 +218,40 @@ function checkDirection(tile, direction) {
 	}
 }
 
-function isWall(tile){
+function determineDirection(originTile, targetTile) {
+	//returns the direction from origin to target
+	if (originTile.posX < targetTile.posX){
+		return 'right';
+	} else if (originTile.posX > targetTile.posX) {
+		return 'left';
+	} else if (originTile.posY < targetTile.posY) {
+		return 'down';
+	} else if (originTile.posY > targetTile.posY) {
+		return 'up';
+	} else {
+		return false;
+	}
+}
+
+function isGate(tile) {
 	if (tile) {
-		if (!tileExists(tile.posX, tile.posY) || tile.type ==='wall' || tile.type ==='gate') {
+		if (tileExists && tile.type ==='gate') {
 			return true;
 		}
+	}
+	return false;
+}
+
+function isWall(tile, noGates){
+	if (tile) {
+		if (!tileExists(tile.posX, tile.posY) || tile.type ==='wall') {
+			return true;
+		}
+
+		if (!noGates) {
+			return isGate(tile);
+		}
+
 	} 
 	return false;
 }
@@ -649,7 +682,7 @@ function drawPacman(player, gc){
 		gc.lineTo(x,y);
 		gc.closePath();
 		gc.fill();
-	}
+}
 
 //END DRAWING FUNCTIONS
 
@@ -815,15 +848,100 @@ function resizeMap() {
 	drawWorld(world);
 }
 
+function getOpenNeighbours(tile, passGate) {
+	function valid(tile) {
+		if (tile) {
+			return !isWall(tile, passGate);
+		}
+	}
+	var neighbours = [];
+	if (valid(upper(tile))) {
+		neighbours.push(upper(tile));
+	}
+	if (valid(lower(tile))) {
+		neighbours.push(lower(tile));
+	}
+	if (valid(right(tile))) {
+		neighbours.push(right(tile));
+	}
+	if (valid(left(tile))) {
+		neighbours.push(left(tile));
+	}
+	return neighbours;
+}
+
+function path(world, actor, endTile) {
+	var grid = JSON.parse(JSON.stringify(world.data)), //cloning an object
+			oppositeTile = checkDirection(actor.tile, oppositeDirection(actor.orientation)), //tile in the opposite direction of ghost movement
+			nodes = grid.length * grid[0].length,
+			current, ret = [];
+	actor.tile.g = 0; //distance from start to node
+	actor.tile.h = distance(actor.tile, endTile); //distance from node to end
+	actor.tile.f = actor.tile.g + actor.tile.h; //total distance from start to end
+	actor.parent = false; //starting tile has no parent
+	var openList = [], closedList = [];
+	openList.push(actor.tile);
+	while (openList.length) {
+
+		current = _.min (openList, function(t) {return t.f}); //finding node with minimum f (total distance to target) - underscore.js
+		if (current.posX === endTile.posX && current.posY === endTile.posY) {
+			//if reached target node
+			var curr = JSON.parse(JSON.stringify(current));
+			while (curr.par){
+				ret.push(determineDirection(curr.par, curr));
+				curr = curr.par;
+			}
+			return ret.reverse();
+		}
+
+		//normal case, target not found, moving current node to closed and process neighbours
+		openList.splice(openList.indexOf(current),1); //removing from openList
+		closedList.push(current);
+
+		var neighbours = getOpenNeighbours(current, actor.isGhost);
+		var nLength = neighbours.length;
+		for (var i = 0; i < nLength; i=i+1) {
+			var neighbour = neighbours[i];
+			if (_.contains(closedList, neighbour)) { //if node already checked - underscore.js
+				continue;
+			}
+
+			var g = current.g+1;
+			gBest = false;
+
+			if(!_.contains(openList, neighbour)) {
+				//if node visited for the first time - underscore.js
+				gBest = true;
+				neighbour.h = distance (neighbour, endTile);
+				openList.push(neighbour);
+			} else if (g < neighbour.g) {
+					gBest = true;
+			}
+
+			if (gBest) {
+				//This is the best path to this node so far
+
+				neighbour.par = current;
+				neighbour.g = g;
+				neighbour.f = neighbour.g + neighbour.h;
+			}
+
+		}
+
+	} //end while
+
+}
+
 function startGame() {
 	//GAME SETUP
 	var game = document.createElement("canvas"),
 			gc = game.getContext('2d'),
 			lastTime = Date.now(),
 			player = {
+				isGhost: false,
 				x:world.playerStart.x*tileSize+startX+tileSize/2,
 				y:world.playerStart.y*tileSize+startY+tileSize/2,
-				tile: world.playerStart,
+				tile: getTile(world.playerStart.x, world.playerStart.y),
 				speed: tileSize*world.speed,
 				orientation: 'right',
 				frame: 0,
@@ -861,20 +979,21 @@ function startGame() {
 	function updateEntity(entity, dt) {
 		entity.tile = getTileAt(entity.x, entity.y);
 
-		if (inTileCenter(entity.x, entity.y, entity.tile, 0.007 * player.speed/tileSize)) {
+		if (inTileCenter(entity.x, entity.y, entity.tile, 0.008 * player.speed/tileSize)) {
 				
-				if (isWall(checkDirection(entity.tile, entity.moving))){
-					entity.moving= false;
+				if (isWall(checkDirection(entity.tile, entity.moving, !entity.isGhost))){
+					entity.moving = false;
 					centerEntity(entity);
 				}
 
-				if(!isWall(checkDirection(entity.tile, entity.nextMove))) {
+				if(!isWall(checkDirection(entity.tile, entity.nextMove), !entity.isGhost)) {
 					entity.moving = entity.nextMove;
 					entity.orientation = entity.nextMove;
 				}
 		}
 		if (entity.moving) {
 			moveEntity(entity, dt);	
+			
 		}
 	}
 
@@ -920,6 +1039,7 @@ function startGame() {
 
 		requestAnimFrame(main);
 	}
+	console.log(path(world,player,getTile(1,1)));
 	main();
 }
 
