@@ -10,7 +10,7 @@ var requestAnimFrame = (function() {
 }());
 
 DEBUG = {
-	SHOWGRID: true
+	SHOWGRID: false
 };
 
 function getMousePos(c, e) {
@@ -788,9 +788,9 @@ function startEditor(){
 		var newT, //New Preview Tile depending on selected action
 				tile = getTileAt(mousePos.x, mousePos.y);
 
-		if (tile && (activeTile === undefined || tile.posX !== activeTile.posX || tile.posY !== activeTile.posY)) {
-			activeTile = tile;
-			drawEditor(activeTile, editor);
+		if (activeTile === undefined || tile.posX !== activeTile.posX || tile.posY !== activeTile.posY) {
+			
+			
 
 			if (action) {
 				if (beforePreview){
@@ -799,6 +799,10 @@ function startEditor(){
 						insertTile(new Tile (beforePreview.type, beforePreview.posX, beforePreview.posY), true);
 					}
 				}
+
+				if (!tile) {return;}
+				activeTile = tile;
+				drawEditor(activeTile, editor);
 				newT = action();
 				if (activeTile.type !== newT.type){
 					//drawing preview tile
@@ -903,6 +907,11 @@ function resizeMap() {
 	tileSize = getTileSize(world, cW, cH);
 	startX = getStartX();
 	startY = getStartY();
+	if (editor) {
+		console.log(editorCanvas)
+		editorCanvas.width = cW;
+		editorCanvas.height = cH;
+	}
 	drawWorld(world);
 }
 
