@@ -8,9 +8,10 @@ var requestAnimFrame = (function() {
 		window.setTimeout(callback, 1000 / 60);
 };
 }());
-
-DEBUG = {
-	SHOWGRID: false
+var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc;
+var DEBUG = {
+	SHOWGRID: false,
+	PATH: true
 };
 
 function getMousePos(c, e) {
@@ -38,7 +39,7 @@ var world,
 	"XXXXXXoXXXXX.XX.XXXXXoXXXXXX", 
 	".....XoXXXXX.XX.XXXXXoX.....",
 	".....XoXX..........XXoX.....",
-	".....XoXX.XXX..XXX.XXoX.....",
+	".....XoXX.XXXGGXXX.XXoX.....",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
 	"T.....o...X..E...X...o.....T",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
@@ -67,38 +68,29 @@ function getTileSize(map, canvasWidth, canvasHeight) {
 	return Math.floor(canvasHeight/map.data.length);
 }
 
-function tileExists(posX,posY){
-	//check if tile is within world bounds
-	if (isNaN(posX) || isNaN(posY) || posX === undefined || posY === undefined){
-	 return false;
-	}
-
-	if (posX < 0 || posY < 0 || posX > world.data[0].length-1 || posY > world.data.length -1) {
-		return false;
-	}
-
-	return true;
-}
-
 $(document).ready(function() {
 var wHeight = $(window).innerHeight(),
 		wWidth = $(window).innerWidth(),
 		gameArea = document.getElementById('game'),
 		mapCanvas = document.getElementById('mapCanvas'),
-		ctx = mapCanvas.getContext('2d'),
-		startX, startY, cW, cH, tileSize, resize = false, gameInProgress = false;
+		resize = false, gameInProgress = false;
+ctx = mapCanvas.getContext('2d');
 mapCanvas.width = wWidth * 0.9;
 mapCanvas.height = wHeight * 0.8;
 cW = mapCanvas.width;
 cH = mapCanvas.height;
 tileSize = getTileSize(map, cW, cH);
 
-
-function Tile (tileInfo,posX,posY) {
-	this.type = tileInfo;
-	this.posX = posX;
-	this.posY = posY;
+if (DEBUG.PATH) {
+	var debugCanvas = document.createElement("canvas");
+	debugCanvas.id = 'debugCanvas';
+	debugCanvas.width = mapCanvas.width;
+	debugCanvas.height = mapCanvas.height;
+	debugCanvas.style = "position:absolute;";
+	gameArea.appendChild(debugCanvas);
+	$(debugCanvas).css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
 }
+
 function getStartX(){
 	return (cW - world.data[0].length*tileSize)/2;
 }
@@ -170,443 +162,7 @@ function parseMap(map){
 	return world;
 }
 
-function distance (tile1, tile2) {
-	return Math.abs(tile1.posX - tile2.posX) + Math.abs(tile1.posY - tile2.posY);
-}
 
-function getTile(posX,posY){
-	//gets tile by grid position
-	if (tileExists(posX,posY)){
-		return world.data[posY][posX];	
-	}
-	return false;
-}
-
-function getTileAt(x,y) {
-	//gets tile by absolute x,y coords
-	return getTile(Math.floor((x-startX)/tileSize), Math.floor((y-startY)/tileSize));
-}
-
-function getTilePosition(tile){
-	//gets tile x,y coords
-	return {x:tile.posX*tileSize + startX, y:tile.posY*tileSize + startY};
-}
-
-function getTileCenter(tile){
-	var pos = getTilePosition(tile);
-	return {x:pos.x+tileSize/2, y: pos.y +tileSize/2};
-}
-
-function upper(tile){
-	return getTile(tile.posX,tile.posY-1);
-}
-
-function lower(tile){
-	return getTile(tile.posX,tile.posY+1);
-}
-
-function left(tile){
-	return getTile(tile.posX-1,tile.posY);
-}
-
-function right(tile){
-	return getTile(tile.posX+1,tile.posY);
-}
-
-function checkDirection(tile, direction) {
-	//returns the next tile in a specified direction
-	switch(direction){
-		case 'up':
-		return upper(tile);
-
-		case 'down':
-		return lower(tile);
-
-		case 'right':
-		return right(tile);
-
-		case 'left':
-		return left(tile);
-	}
-}
-
-function determineDirection(originTile, targetTile) {
-	//returns the direction from origin to target
-	if (originTile.posX < targetTile.posX){
-		return 'right';
-	} else if (originTile.posX > targetTile.posX) {
-		return 'left';
-	} else if (originTile.posY < targetTile.posY) {
-		return 'down';
-	} else if (originTile.posY > targetTile.posY) {
-		return 'up';
-	} else {
-		return false;
-	}
-}
-
-function isGate(tile) {
-	if (tile) {
-		if (tileExists && tile.type ==='gate') {
-			return true;
-		}
-	}
-	return false;
-}
-
-function isWall(tile, noGates){
-	if (tile) {
-		if (!tileExists(tile.posX, tile.posY) || tile.type ==='wall') {
-			return true;
-		}
-
-		if (!noGates) {
-			return isGate(tile);
-		}
-
-	} 
-	return false;
-}
-
-function tileBlocked(tile){
-	//check if tile surounded by walls
-	return (isWall(upper(tile)) && isWall(lower(tile)) && isWall(left(tile)) && isWall(right(tile)));
-}
-
-function isolatedTile(tile) {
-	//check if tile has no wall around
-	return (!isWall(upper(tile)) && !isWall(lower(tile)) && !isWall(left(tile)) && !isWall(right(tile)));
-}
-
-function isVerticalWall(tile) {
-	if (isWall(upper(tile)) && isWall(lower(tile))){
-		if (!isWall(left(tile)) || !isWall(right(tile))) {
-			return true;
-		}
-	}
-	return false;
-}
-
-function isHorizontalWall(tile) {
-	if (isWall(left(tile)) && isWall(right(tile))){
-		if (!isWall(upper(tile)) || !isWall(lower(tile))) {
-			return true;
-		}
-	}
-	return false;
-}
-
-//DRAWING FUNCTIONS BEGIN HERE
-function deleteTileGraphic(x,y){
-	ctx.fillStyle=world.bgColor;
-	ctx.clearRect(x,y,tileSize,tileSize);
-}
-
-function drawUpRightCornerInner(x, y, gate) {
-	ctx.beginPath();
-	ctx.arc(x,y+tileSize,tileSize/3,Math.PI*3/2,0, false);
-	ctx.stroke();
-	if (gate) {
-		ctx.fill();
-	}
-}
-
-function drawUpLeftCornerInner (x, y, gate) {
-	ctx.beginPath();
-	ctx.arc(x+tileSize,y+tileSize,tileSize/3,Math.PI*3/2,Math.PI, true);
-	ctx.stroke();
-	if (gate) {
-		ctx.fill();
-	}
-}
-
-function drawDownRightCornerInner (x, y, gate) {
-	ctx.beginPath();
-	ctx.arc(x,y,tileSize/3,0,Math.PI/2, false);
-	ctx.stroke();	
-	if (gate) {
-		ctx.fill();
-	}
-}
-
-function drawDownLeftCornerInner (x, y, gate) {
-	ctx.beginPath();
-	ctx.arc(x+tileSize,y,tileSize/3,Math.PI,Math.PI/2, true);
-	ctx.stroke();
-	if (gate) {
-		ctx.fill();
-	}
-}
-
-function drawUpRightCornerOuter(x, y) {
-	ctx.beginPath();
-	ctx.arc(x,y+tileSize,tileSize*2/3,Math.PI*3/2,0, false);
-	ctx.stroke();
-}
-
-function drawUpLeftCornerOuter (x, y) {
-	ctx.beginPath();
-	ctx.arc(x+tileSize,y+tileSize,tileSize*2/3,Math.PI*3/2,Math.PI, true);
-	ctx.stroke();
-}
-
-function drawDownLeftCornerOuter (x, y) {
-	ctx.beginPath();
-	ctx.arc(x+tileSize,y,tileSize*2/3,Math.PI,Math.PI/2, true);
-	ctx.stroke();
-}
-
-function drawDownRightCornerOuter (x, y) {
-	ctx.beginPath();
-	ctx.arc(x,y,tileSize*2/3,0,Math.PI/2, false);
-	ctx.stroke();	
-}
-
-function drawCorner(x, y, tile, gate){
-	if (!isWall(upper(left(tile)))) {
-		drawDownRightCornerInner(x,y,tile, gate);
-	}
-	if (!isWall(upper(right(tile)))) {
-		drawDownLeftCornerInner(x,y,tile, gate);		
-	}
-	if (!isWall(lower(left(tile)))) {
-		drawUpRightCornerInner(x,y,tile, gate);
-	}
-	if (!isWall(lower(right(tile)))) {
-		drawUpLeftCornerInner(x,y,tile, gate);
-	}
-}
-
-function drawIsolatedWall(x,y){
-	ctx.beginPath();
-	ctx.arc(x+tileSize/2, y+tileSize/2,tileSize/6,0, Math.PI*2,true);
-	ctx.stroke();
-} 
-
-function drawLeftEnd(x,y) {
-	ctx.beginPath();
-	ctx.moveTo(x+tileSize,y+tileSize/3);
-	ctx.lineTo(x+tileSize/3, y+tileSize/3);
-	ctx.moveTo(x+tileSize,y+tileSize*2/3);
-	ctx.lineTo(x+tileSize/3, y+tileSize*2/3);
-	ctx.stroke();
-	ctx.beginPath();
-	ctx.arc(x+tileSize/3, y+tileSize/2,tileSize/6,Math.PI*3/2, Math.PI/2,true);
-	ctx.stroke();
-}
-
-function drawRightEnd(x,y) {
-	ctx.beginPath();
-	ctx.moveTo(x,y+tileSize/3);
-	ctx.lineTo(x+tileSize*2/3, y+tileSize/3);
-	ctx.moveTo(x,y+tileSize*2/3);
-	ctx.lineTo(x+tileSize*2/3, y+tileSize*2/3);
-	ctx.stroke();
-	ctx.beginPath();
-	ctx.arc(x+tileSize*2/3, y+tileSize/2,tileSize/6,Math.PI*3/2, Math.PI/2,false);
-	ctx.stroke();
-}
-
-function drawTopEnd(x,y) {
-	ctx.beginPath();
-	ctx.moveTo(x+tileSize/3,y+tileSize);
-	ctx.lineTo(x+tileSize/3, y+tileSize/3);
-	ctx.moveTo(x+tileSize*2/3,y+tileSize);
-	ctx.lineTo(x+tileSize*2/3, y+tileSize/3);
-	ctx.stroke();	
-	ctx.beginPath();
-	ctx.arc(x+tileSize/2, y+tileSize/3,tileSize/6,0, Math.PI,true);
-	ctx.stroke();	
-}
-
-function drawBottomEnd(x,y) {
-	ctx.beginPath();
-	ctx.moveTo(x+tileSize/3,y);
-	ctx.lineTo(x+tileSize/3, y+tileSize*2/3);
-	ctx.moveTo(x+tileSize*2/3,y);
-	ctx.lineTo(x+tileSize*2/3, y+tileSize*2/3);
-	ctx.stroke();	
-	ctx.beginPath();
-	ctx.arc(x+tileSize/2, y+tileSize*2/3,tileSize/6,0, Math.PI,false);
-	ctx.stroke();	
-}
-
-function drawCornerTile(x,y,tile){
-	if (isWall(upper(tile)) && isWall(right(tile))) {
-		drawDownLeftCornerOuter(x,y);
-		if (!isWall(upper(right(tile)))) {drawDownLeftCornerInner(x,y);}
-
-	} else if (isWall(upper(tile)) && isWall(left(tile))) {
-		drawDownRightCornerOuter(x,y);
-		if (!isWall(upper(left(tile)))) {drawDownRightCornerInner(x,y);}
-		
-	} else if (isWall(lower(tile)) && isWall(right(tile))) {
-		drawUpLeftCornerOuter(x,y);
-		if (!isWall(lower(right(tile)))) {drawUpLeftCornerInner(x,y);}
-		
-	} else if (isWall(lower(tile)) && isWall(left(tile))) {
-		drawUpRightCornerOuter(x,y);
-		if (!isWall(lower(left(tile))))	{drawUpRightCornerInner(x,y);}
-		
-	} else {
-		//Not corner but a last tile in line
-		if (isWall(right(tile))){
-			drawLeftEnd(x,y);
-		} else if (isWall(left(tile))){
-			drawRightEnd(x,y);
-		} else if (isWall(lower(tile))){
-			drawTopEnd(x,y);
-		} else if (isWall(upper(tile))){
-			drawBottomEnd(x,y);
-		}
-	}
-}
-
-function drawVerticalWall(x,y,tile, gate){
-	if (!isWall(left(tile))){
-		if (gate && !isWall(right(tile))) {
-			ctx.fillRect(x+tileSize/3,y,tileSize/3, tileSize);
-		}
-		ctx.beginPath();
-		ctx.moveTo(x+tileSize/3, y);
-		ctx.lineTo(x+tileSize/3,y+tileSize);
-		ctx.stroke();
-	} else {
-		if (!isWall(left(upper(tile)))){
-			drawDownRightCornerInner(x,y,tile);
-		} 
-		if (!isWall(left(lower(tile)))) {
-			drawUpRightCornerInner(x,y,tile);
-		}
-	}
-	if (!isWall(right(tile))){
-		ctx.beginPath();
-		ctx.moveTo(x+tileSize*2/3, y);
-		ctx.lineTo(x+tileSize*2/3,y+tileSize);
-		ctx.stroke();	
-	} else {
-		if (!isWall(right(upper(tile)))){
-			drawDownLeftCornerInner(x,y,tile);
-		}
-		if (!isWall(right(lower(tile)))){
-			drawUpLeftCornerInner(x,y,tile);
-		}
-	}
-}
-
-function drawHorizontalWall(x,y,tile, gate){
-	if (!isWall(upper(tile))){
-		if (gate && !isWall(lower(tile))) {
-			ctx.fillRect(x,y+tileSize/3,tileSize, tileSize/3);
-		}
-		ctx.beginPath();
-		ctx.moveTo(x, y+tileSize/3);
-		ctx.lineTo(x+tileSize,y+tileSize/3);
-		ctx.stroke();
-	} else {
-		if (!isWall(upper(left(tile)))){
-			drawDownRightCornerInner(x,y,tile);
-		}
-	    if (!isWall(upper(right(tile)))){
-			drawDownLeftCornerInner(x,y,tile);
-		}
-	}
-	if (!isWall(lower(tile))){
-		ctx.beginPath();
-		ctx.moveTo(x, y+tileSize*2/3);
-		ctx.lineTo(x+tileSize,y+tileSize*2/3);
-		ctx.stroke();	
-	} else {
-		if (!isWall(lower(left(tile)))){
-			drawUpRightCornerInner(x,y,tile);
-		}
-		if (!isWall(lower(right(tile)))){
-			drawUpLeftCornerInner(x,y,tile);
-		}
-	}
-}
-
-function drawWallTile(x,y, tile, gate){
-	ctx.strokeStyle = world.wallColor;
-	if (gate) {
-		ctx.strokeStyle = world.gateColor;
-		ctx.fillStyle = world.gateColor;
-	}
-	if (tileBlocked(tile)){
-		drawCorner(x,y,tile, gate);
-	} else if (isolatedTile(tile)){
-		drawIsolatedWall(x,y,tile, gate);
-	} else{
-		if (isVerticalWall(tile)) {
-			drawVerticalWall(x,y,tile,gate);
-		} else if (isHorizontalWall(tile)){
-			drawHorizontalWall(x,y,tile,gate);
-		} else {
-			drawCornerTile(x,y,tile, gate);
-		}	
-	}
-}
-
-function drawPelletTile(x,y){
-	x = x+tileSize/2;
-	y = y+tileSize/2;
-	ctx.fillStyle= world.pelletColor;
-	ctx.beginPath();
-	ctx.arc(x,y,tileSize/10, 0, Math.PI *2, true);
-	ctx.closePath();
-	ctx.fill();
-}
-
-function drawBoosterTile(x,y){
-	x = x+tileSize/2;
-	y = y+tileSize/2;
-	ctx.fillStyle = world.boosterColor;
-	ctx.beginPath();
-	ctx.arc(x,y,tileSize/5, 0, Math.PI *2, true);
-	ctx.closePath();
-	ctx.fill();	
-}
-
-function drawGateTile(x,y,tile){
-	drawWallTile(x,y,tile,true);
-}
-
-function drawTile(tile){
-	var x = startX + tile.posX * tileSize,
-			y = startY+ tile.posY*tileSize;
-	deleteTileGraphic(x,y,tile);
-	if (DEBUG.SHOWGRID) {
-		ctx.strokeStyle = "rgba(255,255,255,0.2)";
-		ctx.beginPath();
-		ctx.moveTo(x,y);
-		ctx.lineTo(x+tileSize, y);
-		ctx.lineTo(x+tileSize, y+tileSize);
-		ctx.lineTo(x, y+tileSize);
-		ctx.closePath();
-		ctx.stroke();
-	}
-	switch (tile.type) {
-		case "open":
-		break;
-
-		case "wall":
-		drawWallTile(x,y, tile);
-		break;
-
-		case "pellet":
-		drawPelletTile(x,y);
-		break;
-
-		case "booster":
-		drawBoosterTile(x,y);
-		break;
-
-		case "gate":
-		drawGateTile(x,y,tile);
-		break;
-
-	}
-}
 
 function insertTile(tile, redrawTile){
 	//inserts tile at a position in the world (optional: redraws it)
@@ -634,7 +190,7 @@ function drawWorld(world) {
 		row = world.data[i].length;
 		for (j = 0; j < row; j=j+1) {
 			tile = world.data[i][j];
-			drawTile(tile);
+			tile.drawTile();
 		}
 	}
 }
@@ -649,93 +205,12 @@ function drawEditor(tile, editor) {
 	ctxed.fillRect(x,y,tileSize,tileSize);
 }
 
-function drawPacman(player, gc){
-		gc.fillStyle= world.pelletColor;
-		var angle = 0,
-				x = player.x,
-				y = player.y,
-				beginArc, endArc;
 
-		switch (player.orientation) {
-			case 'right':
-				angle = 0;
-				break;
 
-			case 'down':
-				angle = Math.PI/2;
-				break;
 
-			case 'left':
-				angle = Math.PI;
-				break;
-			
-			case 'up':
-				angle = Math.PI * 3/2;
-				break;
-
-			default:
-				angle = 0;
-
-		}
-
-		if (player.moving) {
-			if (player.closing){
-				player.frame-=0.02*player.speed/tileSize;
-			} else {
-				player.frame += 0.02*player.speed/tileSize;
-			}
-			
-			if (player.frame >= 1) {
-				player.closing = true;
-			} else if (player.frame <=0){
-				player.closing = false;
-			}
-		}
-		//player.frame = 2;
-		beginArc = angle+(Math.PI/3)*player.frame;
-		endArc = Math.PI*2 + angle -(Math.PI/3)*player.frame;
-		if(beginArc >= Math.PI*2) {
-			beginArc -= Math.PI*2;
-		} else if (endArc<=0) {
-			endArc += Math.PI*2;
-		}
-		gc.beginPath();
-		gc.arc(x,y,tileSize*0.6, beginArc, endArc, false);
-		gc.lineTo(x,y);
-		gc.closePath();
-		gc.fill();
-}
-
-function drawGhost(ghost, gc) {
-	gc.fillStyle = ghost.color;
-	var x = ghost.x,
-			y = ghost.y;
-	gc.beginPath();
-	gc.arc(x,y -tileSize/6, tileSize*0.6, 0, Math.PI, true);
-	gc.moveTo(x - tileSize*0.6, y-tileSize/4);
-	gc.lineTo(x- tileSize *0.6, y+ tileSize*0.6);
-	gc.lineTo(x- tileSize *0.4, y+ tileSize*0.4);
-	gc.lineTo(x- tileSize *0.2, y+ tileSize*0.6);
-	gc.lineTo(x, y+ tileSize*0.4);
-	gc.lineTo(x+ tileSize *0.2, y+ tileSize*0.6);
-	gc.lineTo(x+ tileSize *0.4, y+ tileSize*0.4);
-	gc.lineTo(x+ tileSize *0.6, y+ tileSize*0.6);
-	gc.lineTo(x+ tileSize *0.6, y- tileSize/4);
-	gc.closePath();
-	gc.fill();
-	gc.fillStyle="rgba(0,0,0,1)";
-	gc.beginPath();
-	
-	gc.arc(x-tileSize/3, y- tileSize/6, tileSize*0.15, 0, 2*Math.PI, true);
-	gc.closePath();
-	gc.fill();
-	gc.beginPath();
-	gc.arc(x+tileSize/3, y - tileSize/6, tileSize*0.15, 0, 2*Math.PI, true);
-	gc.closePath();
-	gc.fill();
-}
 
 //END DRAWING FUNCTIONS
+//EDITOR FUNCTIONALITY
 
 function startEditor(){
 	var mousePos, activeTile,
@@ -833,6 +308,8 @@ function startEditor(){
 
 }
 
+//GAME FUNCTIONS
+
 function moveEntity(entity, dt){
 	switch (entity.moving) {
 		case 'up':
@@ -874,28 +351,7 @@ function oppositeDirection(direction){
 	return false;
 }
 
-function inTileCenter(x,y,tile, tolerance){
-	var c = getTileCenter(tile);
-	tolerance = tolerance !== undefined ? tolerance : 0;
-	tolerance = tolerance*tileSize;
-	if ((Math.round(x)- tolerance <= Math.round(c.x) + tolerance && Math.round(x) + tolerance >= Math.round(c.x) - tolerance) && (Math.round(y)-tolerance <= Math.round(c.y) + tolerance && Math.round(y) + tolerance >= Math.round(c.y) - tolerance)) {
-		return true;
-	}
-	return false;
-}
 
-function centerEntity(entity){
-	var c = getTileCenter(entity.tile);
-	if (entity.moving === 'up' || entity.moving === 'down'){
-		entity.x = c.x;
-	} else if (entity.moving === 'left' || entity.moving === 'right') {
-		entity.y = c.y;	
-	} else {
-		entity.x = c.x;
-		entity.y = c.y;
-	}
-	
-}
 
 function resizeMap() {
 	wHeight = $(window).innerHeight();
@@ -907,151 +363,24 @@ function resizeMap() {
 	tileSize = getTileSize(world, cW, cH);
 	startX = getStartX();
 	startY = getStartY();
-	if (editor) {
-		console.log(editorCanvas)
+	if ($('#editorCanvas').length) {
 		editorCanvas.width = cW;
 		editorCanvas.height = cH;
 	}
 	drawWorld(world);
 }
 
-function getValidNeighbours(tile, passGate, illegalTile) {
-	function valid(tile) {
-		if (tile) {
-			if (illegalTile){
-				if (illegalTile.posX === tile.posX && illegalTile.posY === tile.posY) {
-					return false;
-				}
-			}
-			return !isWall(tile, passGate);
-		}
-	}
-	var neighbours = [];
-	if (valid(upper(tile))) {
-		neighbours.push(upper(tile));
-	}
-	if (valid(lower(tile))) {
-		neighbours.push(lower(tile));
-	}
-	if (valid(right(tile))) {
-		neighbours.push(right(tile));
-	}
-	if (valid(left(tile))) {
-		neighbours.push(left(tile));
-	}
-	return neighbours;
-}
-
-function path(world, actor, endTile) {
-	var grid = JSON.parse(JSON.stringify(world.data)), //cloning an object
-			nodes = grid.length * grid[0].length,
-			current, ret = [];
-	actor.tile.g = 0; //distance from start to node
-	actor.tile.h = distance(actor.tile, endTile); //distance from node to end
-	actor.tile.f = actor.tile.g + actor.tile.h; //total distance from start to end
-	actor.tile.par = false; //starting tile has no parent
-	var openList = [], closedList = [];
-	openList.push(actor.tile);
-	console.log(endTile);
-	while (openList.length) {
-
-		current = _.min (openList, function(t) {return t.f}); //finding node with minimum f (total distance to target) - underscore.js
-		if (current.posX === endTile.posX && current.posY === endTile.posY) {
-			//if reached target node
-			var curr = current;//JSON.parse(JSON.stringify(current));
-			while (curr.par){
-				ret.push(determineDirection(curr.par, curr));
-				curr = curr.par;
-			}
-			return ret.reverse();
-		}
-
-		//normal case, target not found, moving current node to closed and process neighbours
-		openList.splice(openList.indexOf(current),1); //removing from openList
-		closedList.push(current);
-
-		var neighbours = getValidNeighbours(current, actor.isGhost);
-		var nLength = neighbours.length;
-		for (var i = 0; i < nLength; i=i+1) {
-			var neighbour = neighbours[i];
-			if (_.contains(closedList, neighbour)) { //if node already checked - underscore.js
-				continue;
-			}
-
-			var g = current.g+1;
-			gBest = false;
-
-			if(!_.contains(openList, neighbour)) {
-				//if node visited for the first time - underscore.js
-				gBest = true;
-				neighbour.h = distance (neighbour, endTile);
-				neighbour.par = false;
-				openList.push(neighbour);
-			} else if (g < neighbour.g) {
-					gBest = true;
-			}
-
-			if (gBest) {
-				//This is the best path to this node so far
-
-				neighbour.par = current;
-				neighbour.g = g;
-				neighbour.f = neighbour.g + neighbour.h;
-			}
-
-		}
-
-	} //end while
-	return [];
-}
-
+//ACTUAL GAME
 function startGame() {
 	//GAME SETUP
 	var game = document.createElement("canvas"),
 			gameOver = false,
-			gc = game.getContext('2d'),
 			lastTime = Date.now(),
-			player = {
-				isGhost: false,
-				x:world.playerStart.x*tileSize+startX+tileSize/2,
-				y:world.playerStart.y*tileSize+startY+tileSize/2,
-				tile: getTile(world.playerStart.x, world.playerStart.y),
-				speed: tileSize*world.speed,
-				orientation: 'right',
-				frame: 0,
-				moving: false,
-				closing:false,
-				nextMove: false
-			},
-			ghost = {
-				isGhost: true,
-				color: "rgba(255,0,0,1)",
-				x:world.ghostStart.x * tileSize+startX+tileSize/2,
-				y:world.ghostStart.y * tileSize+startY+tileSize/2,
-				tile: getTile(world.ghostStart.x, world.ghostStart.y),
-				oldTile: getTile(world.ghostStart.x, world.ghostStart.y),
-				speed: tileSize*world.speed,
-				orientation: 'right',
-				moving: false,
-				nextMove: false,
-				toStep: 5,
-				path: [],
-				updatePath: function() {
-					console.log(this);	
-					this.path = path(world, this, player.tile);
-					console.log(this.path);
-				},
-				init: function() {
-					this.updatePath();
-					this.toStep = 8;
-					this.step();
-				},
-				step: function() {
-					this.moving = _.first(this.path);
-					this.path = _.rest(this.path);
-				}
-			};
+			player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor),
+			ghostTactics = function(target) {return target.tile;},
+			ghost = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, "rgba(255,0,0,1)", ghostTactics, player);
 	gameInProgress = true;
+	gc = game.getContext('2d');
 	$('.options').css({display:'none'});
 
 	game.id = "gameCanvas";
@@ -1081,31 +410,29 @@ function startGame() {
 	function updateEntity(entity, dt) {
 		entity.tile = getTileAt(entity.x, entity.y);
 
-		if (inTileCenter(entity.x, entity.y, entity.tile, 0.007 * entity.speed/tileSize)) {
+		if (entity.inTileCenter(0.007 * entity.speed/tileSize)) {
 				
 			if (entity.isGhost) {
 				if (!(entity.tile.posX === entity.oldTile.posX && entity.tile.posY === entity.oldTile.posY)){
 					if (entity.toStep <= 0 || entity.path.length <1){
-						centerEntity(entity);
+						entity.centerEntity();
 						entity.init();
 					} else {
-						centerEntity(entity);
+						entity.centerEntity();
 						entity.step();
 					}
-
-					entity.toStep = entity.toStep - 1;
-					console.log('step');
 					entity.oldTile = entity.tile;
+					entity.illegalTile = entity.oldTile;
 					
 				}
 			} else {
 
-				if (isWall(checkDirection(entity.tile, entity.moving, !entity.isGhost))){
+				if (tileIsWall(entity.tile.checkDirection(entity.moving))){
 					entity.moving = false;
-					centerEntity(entity);
+					entity.centerEntity();
 				}
 
-				if(!isWall(checkDirection(entity.tile, entity.nextMove), !entity.isGhost)) {
+				if(!tileIsWall(entity.tile.checkDirection(entity.nextMove))) {
 					entity.moving = entity.nextMove;
 					entity.orientation = entity.nextMove;
 				}
@@ -1120,7 +447,7 @@ function startGame() {
 	function removePellet(tile) {
 		var newT = new Tile('open', tile.posX, tile.posY);
 		world.data[tile.posY][tile.posX] = newT;
-		drawTile(newT);
+		newT.drawTile();
 		tile = newT;
 	}
 
@@ -1143,8 +470,8 @@ function startGame() {
 
 	function render() {
 		gc.clearRect(0,0,game.width, game.height);
-		drawPacman(player, gc);
-		drawGhost(ghost,gc);
+		player.drawPacman();
+		ghost.drawGhost();
 	}
 
 	function end () {
@@ -1156,8 +483,8 @@ function startGame() {
 	}
 
 	function main() {
-		var now = Date.now(),
-				dt = (now - lastTime) / 1000.0;
+		var now = Date.now(), //current time
+				dt = (now - lastTime) / 1000.0; //time difference between clicks
 
 		update(dt);
 		render();
@@ -1166,13 +493,15 @@ function startGame() {
 		lastTime = now;
 
 		if (resize){
-			var oldTileSize = tileSize;
 			resizeMap();
 			game.height = mapCanvas.height;
 			game.width = mapCanvas.width;
-			player.x = getTilePosition(player.tile).x + tileSize/2;
-			player.y = getTilePosition(player.tile).y + tileSize/2;
+			player.x = player.tile.getTilePosition().x + tileSize/2;
+			player.y = player.tile.getTilePosition().y + tileSize/2;
 			player.speed = tileSize*world.speed;
+			ghost.x = ghost.tile.getTilePosition().x + tileSize/2;
+			ghost.y = ghost.tile.getTilePosition().y + tileSize/2;
+			ghost.speed = tileSize*world.speed;
 			resize = false;
 		}
 		if (gameOver) {
@@ -1196,6 +525,8 @@ $(window).load(function(){
 	//startGame();
 });
 
+
+//RESIZE LISTENER
 $(window).resize(function(){
 	if (gameInProgress) {
 		resize = true; //If game in progress, queue the resize after tick is done
@@ -1204,4 +535,7 @@ $(window).resize(function(){
 	}
 });
 
+
+
 });
+
