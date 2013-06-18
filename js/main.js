@@ -11,7 +11,7 @@ var requestAnimFrame = (function() {
 var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc;
 var DEBUG = {
 	SHOWGRID: false,
-	PATH: true,
+	PATH: false,
 	PATHS: {}
 };
 
@@ -365,10 +365,14 @@ function startGame() {
 			player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor),
 			// ghost = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.redGhost.color, ghostTypes.redGhost.tactics, player),
 			// ghost2 = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.greenGhost.color, ghostTypes.greenGhost.tactics, player),
-			enemies = [];
+			enemies = [],
+			idleEnemies = [], activeEnemies = [];
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.redGhost.color, ghostTypes.redGhost.tactics, player));
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.greenGhost.color, ghostTypes.greenGhost.tactics, player));		
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.blueGhost.color, ghostTypes.blueGhost.tactics, player));		
+	_.each(enemies, function(e){
+		idleEnemies.push(e);
+	});
 	gameInProgress = true;
 	gc = game.getContext('2d');
 	$('.options').css({display:'none'});
@@ -499,6 +503,18 @@ function startGame() {
 	function main() {
 		var now = Date.now(), //current time
 				dt = (now - lastTime) / 1000.0; //time difference between clicks
+		if (idleEnemies.length > 0){
+			console.log(spawnTime);
+			spawnTime = spawnTime - dt;
+			if (spawnTime <= 0){
+				console.log(spawnTime);
+				var activatedEnemy = idleEnemies.pop();
+				activatedEnemy.init();
+				activeEnemies.push(activatedEnemy);
+				spawnTime = 5;
+			}
+			
+		}
 
 		update(dt);
 		render();
@@ -513,9 +529,11 @@ function startGame() {
 			player.x = player.tile.getTilePosition().x + tileSize/2;
 			player.y = player.tile.getTilePosition().y + tileSize/2;
 			player.speed = tileSize*world.speed;
-			ghost.x = ghost.tile.getTilePosition().x + tileSize/2;
-			ghost.y = ghost.tile.getTilePosition().y + tileSize/2;
-			ghost.speed = tileSize*world.speed;
+			_.each(enemies, function(e) {
+				e.x = e.tile.getTilePosition().x + tileSize/2;
+				e.y = e.tile.getTilePosition().y + tileSize/2;
+				e.speed = tileSize*world.speed;
+			});
 			resize = false;
 		}
 		if (gameOver) {
@@ -524,10 +542,8 @@ function startGame() {
 			requestAnimFrame(main);	
 		}
 	}
+	var spawnTime = 0;
 	main();
-	_.each(enemies, function(enemy){
-		enemy.init();
-	});
 	
 }
 
