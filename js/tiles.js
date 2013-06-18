@@ -365,7 +365,7 @@ Tile.prototype.drawCornerTile = function (x,y){
   } else {
     //Not corner but a last tile in line
     if (tileIsWall(this.right())){
-      this.drawLeftEnd();
+      this.drawLeftEnd(x,y);
     } else if (tileIsWall(this.left())){
       this.drawRightEnd(x,y);
     } else if (tileIsWall(this.lower())){

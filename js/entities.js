@@ -9,6 +9,10 @@ function Entity (x,y,tile, speed, color) {
   this.color = color;
 }
 
+Entity.prototype.update = function (){
+
+}
+
 Entity.prototype.centerEntity = function () {
   var c = this.tile.getTileCenter();
   if (this.moving === 'up' || this.moving === 'down'){

@@ -438,6 +438,7 @@ function startGame() {
 			moveEntity(entity, dt);	
 			
 		}
+		entity.update();
 	}
 
 	function removePellet(tile) {
