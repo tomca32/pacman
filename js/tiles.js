@@ -31,12 +31,28 @@ function tileIsWall (tile) {
   return false;
 }
 
-
 function Tile (tileInfo,posX,posY) {
   var that = this;
   this.type = tileInfo;
   this.posX = posX;
   this.posY = posY;
+}
+
+function oppositeDirection(direction){
+  switch (direction) {
+    case 'up':
+      return 'down';
+
+    case 'down':
+      return 'up';
+
+    case 'left':
+      return 'right';
+
+    case 'right':
+      return 'left';
+  }
+  return false;
 }
 
 Tile.prototype.getTilePosition = function(){
@@ -498,19 +514,21 @@ Tile.prototype.path = function(actor, endTile) {
   this.par = false; //starting tile has no parent
   openList.push(this);
   if (DEBUG.PATH) {
-    var debugCanvas = document.getElementById('debugCanvas');
-    var bugctx = debugCanvas.getContext('2d');
-    bugctx.clearRect(0,0,debugCanvas.width,debugCanvas.height);
-    bugctx.fillStyle = "rgba(0, 50, 0, 0.6)";
+    // var debugCanvas = document.getElementById('debugCanvas');
+    // var bugctx = debugCanvas.getContext('2d');
+    
+    // bugctx.fillStyle = actor.color;
   }
   while (openList.length) {
 
     current = _.min (openList, function(t) {return t.f}); //finding node with minimum f (total distance to target) - underscore.js
     if (current.posX === endTile.posX && current.posY === endTile.posY) {
       //if reached target node
+      DEBUG.PATHS[actor.color] = {color: actor.color, path: []};
       while (current.par){
         if (DEBUG.PATH) {
-          bugctx.fillRect(current.posX * tileSize + startX, current.posY * tileSize + startY, tileSize, tileSize);
+          
+          DEBUG.PATHS[actor.color].path.push([current.posX * tileSize + startX, current.posY * tileSize + startY]);
         }
         ret.push(current.par.determineDirection(current));
         current = current.par;

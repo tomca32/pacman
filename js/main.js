@@ -11,7 +11,8 @@ var requestAnimFrame = (function() {
 var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc;
 var DEBUG = {
 	SHOWGRID: false,
-	PATH: true
+	PATH: true,
+	PATHS: {}
 };
 
 function getMousePos(c, e) {
@@ -41,7 +42,7 @@ var world,
 	".....XoXX..........XXoX.....",
 	".....XoXX.XXXGGXXX.XXoX.....",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
-	"T.....o...X..E...X...o.....T",
+	"T....Xo...X..E...X...oX....T",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
 	".....XoXX.XXXXXXXX.XXoX.....",
 	".....XoXX.....S....XXoX.....",
@@ -174,7 +175,7 @@ function insertTile(tile, redrawTile){
 			for (j=0; j<3; j=j+1){
 				if (tileExists(tile.posX+j-1, tile.posY+i-1)){
 					tempTile = new Tile(world.data[tile.posY+i-1][tile.posX+j-1].type, tile.posX+j-1, tile.posY+i-1);	
-					drawTile(tempTile);
+					tempTile.drawTile();
 				}
 			}
 		}
@@ -334,22 +335,7 @@ function changeMovement(entity, direction){
 	entity.nextMove = direction;
 }
 
-function oppositeDirection(direction){
-	switch (direction) {
-		case 'up':
-			return 'down';
 
-		case 'down':
-			return 'up';
-
-		case 'left':
-			return 'right';
-
-		case 'right':
-			return 'left';
-	}
-	return false;
-}
 
 
 
@@ -378,7 +364,11 @@ function startGame() {
 			lastTime = Date.now(),
 			player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor),
 			ghostTactics = function(target) {return target.tile;},
-			ghost = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, "rgba(255,0,0,1)", ghostTactics, player);
+			ghost = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.redGhost.color, ghostTypes.redGhost.tactics, player),
+			ghost2 = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.greenGhost.color, ghostTypes.greenGhost.tactics, player),
+			enemies = [];
+	enemies.push(ghost);
+	enemies.push(ghost2);		
 	gameInProgress = true;
 	gc = game.getContext('2d');
 	$('.options').css({display:'none'});
@@ -410,7 +400,7 @@ function startGame() {
 	function updateEntity(entity, dt) {
 		entity.tile = getTileAt(entity.x, entity.y);
 
-		if (entity.inTileCenter(0.007 * entity.speed/tileSize)) {
+		if (entity.inTileCenter(0.009 * entity.speed/tileSize)) {
 				
 			if (entity.isGhost) {
 				if (!(entity.tile.posX === entity.oldTile.posX && entity.tile.posY === entity.oldTile.posY)){
@@ -434,7 +424,9 @@ function startGame() {
 
 				if(!tileIsWall(entity.tile.checkDirection(entity.nextMove))) {
 					entity.moving = entity.nextMove;
-					entity.orientation = entity.nextMove;
+					if (entity.nextMove){
+						entity.orientation = entity.nextMove;
+					}
 				}
 			}
 		}
@@ -453,7 +445,10 @@ function startGame() {
 
 	function update(dt) {
 		updateEntity(player, dt);
-		updateEntity(ghost, dt);
+		_.each(enemies, function(enemy){
+			updateEntity(enemy,dt);
+		});
+		//updateEntity(ghost, dt);
 		if (player.tile.type === 'pellet' || player.tile.type === 'booster') {
 			world.pellets = world.pellets - 1;
 			removePellet(player.tile);
@@ -461,8 +456,12 @@ function startGame() {
 
 		if (world.pellets < 1) {
 			gameOver = 'win';
-		} else if (player.tile.posX === ghost.tile.posX && player.tile.posY === ghost.tile.posY) {
-			gameOver = 'loser';
+		} else {
+			_.each(enemies, function(enemy){
+				if (player.tile.posX === enemy.tile.posX && player.tile.posY === enemy.tile.posY) {
+					gameOver = 'loser';
+				}
+			});
 		}
 		
 		
@@ -471,7 +470,22 @@ function startGame() {
 	function render() {
 		gc.clearRect(0,0,game.width, game.height);
 		player.drawPacman();
-		ghost.drawGhost();
+		_.each(enemies,function(enemy) {
+			enemy.drawGhost();
+		});
+		if (DEBUG.PATH) {
+			var debugCanvas = document.getElementById('debugCanvas');
+    	var bugctx = debugCanvas.getContext('2d');
+			bugctx.clearRect(0,0,debugCanvas.width,debugCanvas.height);
+			_.each(DEBUG.PATHS, function(debugPath) {
+				bugctx.fillStyle = debugPath.color;
+				bugctx.globalAlpha = 0.2;
+				_.each(debugPath.path, function(p){
+					bugctx.fillRect(p[0],p[1],tileSize,tileSize);
+				});
+			});
+			bugctx.globalAlpha = 1;
+		}
 	}
 
 	function end () {
@@ -511,7 +525,10 @@ function startGame() {
 		}
 	}
 	main();
-	ghost.init();
+	_.each(enemies, function(enemy){
+		enemy.init();
+	});
+	
 }
 
 $(window).load(function(){
