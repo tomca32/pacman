@@ -31,6 +31,23 @@ function tileIsWall (tile) {
   return false;
 }
 
+function getRandomTile(world, type, excluding) {
+  function randomInt (rMin, rMax){
+    return Math.floor(Math.random() * (rMax - rMin + 1)) + rMin;
+  }
+
+  var row = randomInt(0,world.data.length);
+  var column = randomInt(0, world.data[0].length);
+  var tile = getTile(column,row);
+  if (tile.type === type || type ==="any") {
+    _.each(excluding, function(t){
+      if (tile.type === t) return getRandomTile(world,type);
+    });
+    return tile;
+  }
+  return getRandomTile(world, type);
+}
+
 function Tile (tileInfo,posX,posY) {
   var that = this;
   this.type = tileInfo;

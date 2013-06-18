@@ -221,5 +221,11 @@ var ghostTypes = {
       }
       return getTargetTile.call(this, target);
     }
+  },
+  blueGhost: {
+    color: "rgba(0,0,255,1)",
+    tactics: function (target) {
+      return getRandomTile(world, "any", ["wall"]);
+    }
   }
 };
