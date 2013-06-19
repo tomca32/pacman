@@ -45,6 +45,7 @@ function Pacman (x,y,tile,speed, color) {
   this.frame=0;
   this.closing = false;
   this.isGhost = false;
+  this.weapon = weapons.shotgun;
 
 }
 Pacman.prototype.drawPacman = function(){
@@ -103,7 +104,9 @@ Pacman.prototype.drawPacman = function(){
     gc.closePath();
     gc.fill();
 }
-
+Pacman.prototype.fire = function(speed){
+  return this.weapon.fire(this.x, this.y, this.orientation, speed)
+}
 ///////////////////////////////////////////GHOST//////////////////////////////////////////////////
 Ghost.prototype = new Entity();
 Ghost.prototype.constructor = Ghost;
@@ -157,9 +160,13 @@ Ghost.prototype.drawGhost = function () {
   gc.lineTo(x+ tileSize *0.6, y- tileSize/4);
   gc.closePath();
   gc.fill();
-  gc.fillStyle="rgba(0,0,0,1)";
+  this.drawEyes(x,y);
+};
+
+Ghost.prototype.drawEyes = function (x,y) {
+  //White Background
+  gc.fillStyle="rgba(255,255,255,1)";
   gc.beginPath();
-  
   gc.arc(x-tileSize/3, y- tileSize/6, tileSize*0.15, 0, 2*Math.PI, true);
   gc.closePath();
   gc.fill();
@@ -167,7 +174,54 @@ Ghost.prototype.drawGhost = function () {
   gc.arc(x+tileSize/3, y - tileSize/6, tileSize*0.15, 0, 2*Math.PI, true);
   gc.closePath();
   gc.fill();
+
+  //Pupils
+  //vector calculation for determining direction to target
+  var eyesDirection = [-this.tile.posX + this.target.tile.posX, -this.tile.posY + this.target.tile.posY]; //not sure why - +
+  var length = Math.sqrt(Math.pow(eyesDirection[0],2) + Math.pow(eyesDirection[1],2));
+  console.log(length);
+  eyesDirection = _.map(eyesDirection, function(v){
+    if (length === 0) return 0;
+    return v/length;
+  });  //normalization
+
+  gc.fillStyle="rgba(0,0,0,1)";
+  gc.beginPath();
+  gc.arc(x+tileSize/3+eyesDirection[0]*tileSize*0.05, y-(tileSize/6)+eyesDirection[1]*tileSize*0.05,tileSize*0.1, 0 ,2*Math.PI, true);
+  gc.closePath();
+  gc.fill();
+  gc.beginPath();
+  gc.arc(x-tileSize/3+eyesDirection[0]*tileSize*0.05, y-(tileSize/6)+eyesDirection[1]*tileSize*0.05,tileSize*0.1, 0 ,2*Math.PI, true);
+  gc.closePath();
+  gc.fill();
 }
+
+function Bullet (x,y,direction, speed) {
+  this.x = x;
+  this.y = y;
+  this.direction = direction;
+  this.damage = 1;
+  this.speed = speed;
+  console.log(this.speed);
+}
+
+Bullet.prototype.draw = function() {
+  gc.strokeStyle = "rgba(255,255,255,1)";
+  // gc.beginPath();
+  //gc.arc(this.x, this.y, tileSize/20, 0, 2*Math.PI, false);
+  // gc.closePath();
+  // gc.fill();
+  gc.beginPath();
+  gc.moveTo(this.x, this.y);
+  gc.lineTo(this.x+this.direction[0]*tileSize, this.y+this.direction[1]*tileSize);
+  gc.closePath();
+  gc.stroke();
+};
+
+Bullet.prototype.step = function (dt) {
+  this.x = this.x + this.direction[0]*dt*this.speed*tileSize;
+  this.y = this.y + this.direction[1]*dt*this.speed*tileSize;
+};
 
 var ghostTypes = {
   redGhost: {
@@ -233,3 +287,35 @@ var ghostTypes = {
     }
   }
 };
+
+var weapons = {
+  shotgun: {
+    frame: 0,
+
+    fire: function(x,y,direction, speed){
+      var toReturn = [], angle, startAngle, angularDistance, spread = Math.PI/12, bullets = 10;
+      switch (direction) {
+        case 'up':
+          angle = Math.PI*3/2;
+          break;
+        case 'down':
+          angle = Math.PI/2;
+          break;
+        case 'left':
+          angle = Math.PI;
+          break;
+        case 'right':
+          angle = Math.PI*2;
+          break;
+      }
+      startAngle = angle - spread/2;
+      angularDistance = spread/bullets;
+      for (var i=0; i < bullets; i=i+1) {
+        toReturn.push(new Bullet(x,y,[Math.cos(startAngle), Math.sin(startAngle)], speed));
+        console.log(startAngle);
+        startAngle = startAngle + angularDistance;
+      }
+      return toReturn;
+    }
+  }
+}

@@ -11,7 +11,7 @@ var requestAnimFrame = (function() {
 var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc;
 var DEBUG = {
 	SHOWGRID: false,
-	PATH: false,
+	PATH: true,
 	PATHS: {}
 };
 
@@ -366,7 +366,7 @@ function startGame() {
 			// ghost = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.redGhost.color, ghostTypes.redGhost.tactics, player),
 			// ghost2 = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.greenGhost.color, ghostTypes.greenGhost.tactics, player),
 			enemies = [],
-			idleEnemies = [], activeEnemies = [];
+			idleEnemies = [], activeEnemies = [], bullets = [];
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.redGhost.color, ghostTypes.redGhost.tactics, player));
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.greenGhost.color, ghostTypes.greenGhost.tactics, player));		
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.blueGhost.color, ghostTypes.blueGhost.tactics, player));		
@@ -396,6 +396,14 @@ function startGame() {
 				break;
 			case 40:
 				changeMovement(player, 'down');
+				break;
+			case 32:
+				var newBullets = player.fire(tileSize*world.speed);
+				_.each (newBullets, function(b) {
+					bullets.push(b);
+
+				});
+				console.log(bullets);
 				break;
 		}
 	});
@@ -453,6 +461,9 @@ function startGame() {
 		_.each(enemies, function(enemy){
 			updateEntity(enemy,dt);
 		});
+		_.each(bullets, function(bullet){
+			bullet.step(dt);
+		});
 		//updateEntity(ghost, dt);
 		if (player.tile.type === 'pellet' || player.tile.type === 'booster') {
 			world.pellets = world.pellets - 1;
@@ -477,6 +488,9 @@ function startGame() {
 		player.drawPacman();
 		_.each(enemies,function(enemy) {
 			enemy.drawGhost();
+		});
+		_.each(bullets, function(bullet){
+			bullet.draw();
 		});
 		if (DEBUG.PATH) {
 			var debugCanvas = document.getElementById('debugCanvas');
@@ -505,10 +519,8 @@ function startGame() {
 		var now = Date.now(), //current time
 				dt = (now - lastTime) / 1000.0; //time difference between clicks
 		if (idleEnemies.length > 0){
-			console.log(spawnTime);
 			spawnTime = spawnTime - dt;
 			if (spawnTime <= 0){
-				console.log(spawnTime);
 				var activatedEnemy = idleEnemies.pop();
 				activatedEnemy.init();
 				activeEnemies.push(activatedEnemy);
