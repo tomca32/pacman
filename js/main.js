@@ -41,9 +41,9 @@ var world,
 	".....XoXXXXX.XX.XXXXXoX.....",
 	".....XoXX..........XXoX.....",
 	".....XoXX.XXXGGXXX.XXoX.....",
-	"XXXXXXoXX.X......X.XXoXXXXXX",
-	"T.....o...X..E...X...o.....T",
-	"XXXXXXoXX.X......X.XXoXXXXXX",
+	"XXXXXXoXX.XEEEEEEX.XXoXXXXXX",
+	"T.....o...XEEEEEEX...o.....T",
+	"XXXXXXoXX.XEEEEEEX.XXoXXXXXX",
 	".....XoXX.XXXXXXXX.XXoX.....",
 	".....XoXX.....S....XXoX.....",
 	".....XoXX.XXXXXXXX.XXoX.....",
@@ -109,7 +109,8 @@ function parseMap(map){
 		boosterColor: map.boosterColor,
 		wallColor: map.wallColor,
 		speed: map.speed,
-		gateColor: map.gateColor
+		gateColor: map.gateColor,
+		ghostStart: []
 	};
 	var newTile, newLine, i, j, line, lineL, tile,
 			l = map.data.length;
@@ -153,7 +154,7 @@ function parseMap(map){
 
 				case "E":
 				newTile = new Tile("open",j,i);
-				world.ghostStart = {x:j,y:i};
+				world.ghostStart.push(newTile);
 				break;
 			}
 			newLine.push(newTile);
@@ -295,6 +296,16 @@ function startEditor(){
 }
 
 //GAME FUNCTIONS
+function randomTileFromArray(arr) {
+	var len = arr.length;
+	return arr[randomInt(0, len-1)];
+}
+
+function spawnGhost(ghostType, target){
+	var tile = randomTileFromArray(world.ghostStart);
+	return new Ghost (tile.getTileCenter().x, tile.getTileCenter().y, tile, tileSize*world.speed, ghostType.color, ghostType.tactics, target);
+}
+
 
 function moveEntity(entity, dt){
 	switch (entity.moving) {
@@ -349,10 +360,13 @@ function startGame() {
 			lastTime = Date.now(),
 			player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor),
 			enemies = [],
-			idleEnemies = [], activeEnemies = [], bullets = [], toRemove = [];
-	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.redGhost.color, ghostTypes.redGhost.tactics, player));
-	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.greenGhost.color, ghostTypes.greenGhost.tactics, player));		
-	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.blueGhost.color, ghostTypes.blueGhost.tactics, player));		
+			idleEnemies = [], activeEnemies = [], bullets = [], toRemove = [],ghostStart;
+	ghostStart = randomTileFromArray(world.ghostStart);
+	console.log(ghostStart);
+	enemies.push(spawnGhost(ghostTypes.redGhost, player));
+	enemies.push(spawnGhost(ghostTypes.greenGhost, player));
+	enemies.push(spawnGhost(ghostTypes.blueGhost, player));
+	console.log(enemies[0].tile);
 	_.each(enemies, function(e){
 		idleEnemies.push(e);
 	});

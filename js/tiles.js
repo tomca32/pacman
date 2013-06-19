@@ -1,3 +1,7 @@
+function randomInt (rMin, rMax){
+  return Math.floor(Math.random() * (rMax - rMin + 1)) + rMin;
+}
+
 function tileExists(posX,posY){
   //check if tile is within world bounds
   if (isNaN(posX) || isNaN(posY) || posX === undefined || posY === undefined){
@@ -32,9 +36,6 @@ function tileIsWall (tile) {
 }
 
 function getRandomTile(world, type, excluding) {
-  function randomInt (rMin, rMax){
-    return Math.floor(Math.random() * (rMax - rMin + 1)) + rMin;
-  }
 
   var row = randomInt(0,world.data.length);
   var column = randomInt(0, world.data[0].length);
