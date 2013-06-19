@@ -179,7 +179,6 @@ Ghost.prototype.drawEyes = function (x,y) {
   //vector calculation for determining direction to target
   var eyesDirection = [-this.tile.posX + this.target.tile.posX, -this.tile.posY + this.target.tile.posY]; //not sure why - +
   var length = Math.sqrt(Math.pow(eyesDirection[0],2) + Math.pow(eyesDirection[1],2));
-  console.log(length);
   eyesDirection = _.map(eyesDirection, function(v){
     if (length === 0) return 0;
     return v/length;

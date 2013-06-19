@@ -91,10 +91,16 @@ Tile.prototype.lower = function(){
 };
 
 Tile.prototype.left = function(){
+  if (this.posX ===0 && !this.isWall()) {
+    return getTile(world.data[0].length-1, this.posY);
+  }
   return getTile(this.posX-1,this.posY);
 };
 
 Tile.prototype.right = function(){
+  if (this.posX ===world.data[0].length-1 && !this.isWall()) {
+    return getTile(0, this.posY);
+  }
   return getTile(this.posX+1,this.posY);
 };
 
@@ -117,10 +123,10 @@ Tile.prototype.checkDirection = function(direction) {
 
 Tile.prototype.determineDirection = function(targetTile) {
   //returns the direction to target
-  if (this.posX < targetTile.posX){
+  if (this.posX < targetTile.posX || (this.posX === 0 && this.posY === targetTile.posY && targetTile.posX === world.data[0].length-1 && !this.isWall() && !targetTile.isWall())){
     return 'right';
   } 
-  if (this.posX > targetTile.posX) {
+  if (this.posX > targetTile.posX || (targetTile.posX === 0 && this.posY === targetTile.posY && this.posX === world.data[0].length-1 && !this.isWall() && !targetTile.isWall())) {
     return 'left';
   }
   if (this.posY < targetTile.posY) {

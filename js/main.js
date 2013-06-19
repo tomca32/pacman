@@ -42,7 +42,7 @@ var world,
 	".....XoXX..........XXoX.....",
 	".....XoXX.XXXGGXXX.XXoX.....",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
-	"T....Xo...X..E...X...oX....T",
+	"T.....o...X..E...X...o.....T",
 	"XXXXXXoXX.X......X.XXoXXXXXX",
 	".....XoXX.XXXXXXXX.XXoX.....",
 	".....XoXX.....S....XXoX.....",
@@ -410,8 +410,13 @@ function startGame() {
 	//END GAME SETUP
 
 	function updateEntity(entity, dt) {
-		entity.tile = getTileAt(entity.x, entity.y);
 
+		if (entity.x < startX) {
+			entity.x = gameCanvas.width-1-startX;
+		} else if (entity.x > gameCanvas.width-startX -1) {
+			entity.x = startX+1;
+		}
+		entity.tile = getTileAt(entity.x, entity.y);
 		if (entity.inTileCenter(0.009 * entity.speed/tileSize)) {
 				
 			if (entity.isGhost) {
