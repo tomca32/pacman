@@ -165,22 +165,7 @@ function parseMap(map){
 
 
 
-function insertTile(tile, redrawTile){
-	//inserts tile at a position in the world (optional: redraws it)
-	var i, j, tempTile;
-	world.data[tile.posY][tile.posX] = tile;
 
-	if (redrawTile){
-		for (i =0; i<3; i=i+1){
-			for (j=0; j<3; j=j+1){
-				if (tileExists(tile.posX+j-1, tile.posY+i-1)){
-					tempTile = new Tile(world.data[tile.posY+i-1][tile.posX+j-1].type, tile.posX+j-1, tile.posY+i-1);	
-					tempTile.drawTile();
-				}
-			}
-		}
-	}
-}
 
 function drawWorld(world) {
 	var i, j, row, tile,
@@ -363,10 +348,8 @@ function startGame() {
 			gameOver = false,
 			lastTime = Date.now(),
 			player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor),
-			// ghost = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.redGhost.color, ghostTypes.redGhost.tactics, player),
-			// ghost2 = new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.greenGhost.color, ghostTypes.greenGhost.tactics, player),
 			enemies = [],
-			idleEnemies = [], activeEnemies = [], bullets = [];
+			idleEnemies = [], activeEnemies = [], bullets = [], toRemove = [];
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.redGhost.color, ghostTypes.redGhost.tactics, player));
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.greenGhost.color, ghostTypes.greenGhost.tactics, player));		
 	enemies.push(new Ghost (world.ghostStart.x * tileSize+startX+tileSize/2, world.ghostStart.y * tileSize+startY+tileSize/2, getTile(world.ghostStart.x, world.ghostStart.y), tileSize*world.speed, ghostTypes.blueGhost.color, ghostTypes.blueGhost.tactics, player));		
@@ -398,12 +381,11 @@ function startGame() {
 				changeMovement(player, 'down');
 				break;
 			case 32:
-				var newBullets = player.fire(tileSize*world.speed);
+				var newBullets = player.fire(tileSize * world.speed*3);
 				_.each (newBullets, function(b) {
 					bullets.push(b);
 
 				});
-				console.log(bullets);
 				break;
 		}
 	});
@@ -416,11 +398,17 @@ function startGame() {
 		} else if (entity.x > gameCanvas.width-startX -1) {
 			entity.x = startX+1;
 		}
+		if (entity.y < startY) {
+			console.log('blah');
+			entity.y = gameCanvas.height-1-startY;
+		} else if (entity.y > gameCanvas.height-startY -1) {
+			entity.y = startY+1;
+		}
 		entity.tile = getTileAt(entity.x, entity.y);
 		if (entity.inTileCenter(0.009 * entity.speed/tileSize)) {
 				
-			if (entity.isGhost) {
-				if (!(entity.tile.posX === entity.oldTile.posX && entity.tile.posY === entity.oldTile.posY)){
+			if (entity.isGhost && entity.initialized) {
+				if (!(entity.tile.posX === entity.oldTile.posX && entity.tile.posY === entity.oldTile.posY) || entity.path.length <1){
 					if (entity.toStep <= 0 || entity.path.length <1){
 						entity.centerEntity();
 						entity.init();
@@ -469,7 +457,23 @@ function startGame() {
 		_.each(bullets, function(bullet){
 			bullet.step(dt);
 		});
-		//updateEntity(ghost, dt);
+		var bulLength = bullets.length;
+		var eneLength = enemies.length;
+		for (var i = 0; i< bulLength; i = i +1) {
+			for (var j = 0; j < eneLength; j = j + 1) {
+				if (collision(bullets[i], enemies[j])){
+					bullets[i].destroy(i);
+					toRemove.push(bullets[i]);
+				}
+			}
+
+			var stupidWall = getTileAt(bullets[i].x, bullets[i].y); //CHANGE THIS
+			if (stupidWall && stupidWall.isWall() && !bullets[i].destroyed) {
+				bullets[i].destroy(i);
+				toRemove.push(bullets[i]);
+				stupidWall.update(bullets[i].damage);
+			}
+		}
 		if (player.tile.type === 'pellet' || player.tile.type === 'booster') {
 			world.pellets = world.pellets - 1;
 			removePellet(player.tile);
@@ -479,13 +483,24 @@ function startGame() {
 			gameOver = 'win';
 		} else {
 			_.each(enemies, function(enemy){
-				if (player.tile.posX === enemy.tile.posX && player.tile.posY === enemy.tile.posY) {
+				//if (player.tile.posX === enemy.tile.posX && player.tile.posY === enemy.tile.posY) {
+				if (collision(player, enemy)) {
 					gameOver = 'loser';
 				}
 			});
 		}
 		
 		
+	}
+
+	function removal() {
+		toRemove = _.sortBy(toRemove, function(e){
+			return e.index;
+		});
+		for (var i = toRemove.length-1; i>=0; i = i - 1){
+			bullets.splice(toRemove[i].index, 1);
+		}
+		toRemove = [];
 	}
 
 	function render() {
@@ -535,6 +550,7 @@ function startGame() {
 		}
 
 		update(dt);
+		removal();
 		render();
 		//removal();
 

@@ -1,3 +1,11 @@
+function collision (e1, e2) {
+  if (Math.abs(e1.x - e2.x) <= tileSize && Math.abs(e1.y - e2.y) <= tileSize){
+    return true;
+  }
+  return false;
+}
+
+
 function Entity (x,y,tile, speed, color) {
   //Entity constructor
   this.x = x;
@@ -120,6 +128,7 @@ function Ghost (x,y,tile,speed,color, tactics, target) {
   this.path = [];
   this.oldTile = tile;
   this.tactics = tactics;
+  this.initialized = false;
   this.target = target;
 
 
@@ -135,6 +144,7 @@ Ghost.prototype.init = function() {
   this.updatePath();
   this.toStep = this.steps;
   this.step();
+  this.initialized = true;
 };
 
 Ghost.prototype.step = function() {
@@ -201,26 +211,35 @@ function Bullet (x,y,direction, speed) {
   this.direction = direction;
   this.damage = 1;
   this.speed = speed;
-  console.log(this.speed);
 }
 
 Bullet.prototype.draw = function() {
   gc.strokeStyle = "rgba(255,255,255,1)";
-  // gc.beginPath();
-  //gc.arc(this.x, this.y, tileSize/20, 0, 2*Math.PI, false);
-  // gc.closePath();
-  // gc.fill();
   gc.beginPath();
   gc.moveTo(this.x, this.y);
-  gc.lineTo(this.x+this.direction[0]*tileSize, this.y+this.direction[1]*tileSize);
-  gc.closePath();
+  gc.lineTo(this.x-this.direction[0]*tileSize, this.y-this.direction[1]*tileSize);
   gc.stroke();
 };
 
 Bullet.prototype.step = function (dt) {
-  this.x = this.x + this.direction[0]*dt*this.speed*tileSize;
-  this.y = this.y + this.direction[1]*dt*this.speed*tileSize;
+  this.x = this.x + this.direction[0]*dt*this.speed;
+  this.y = this.y + this.direction[1]*dt*this.speed;
+  if (this.x < startX) {
+      this.x = gameCanvas.width-1-startX;
+  } else if (this.x > gameCanvas.width-startX -1) {
+      this.x = startX+1;
+  }
+  if (this.y < startY) {
+      this.y = gameCanvas.height-1-startY;
+  } else if (this.y > gameCanvas.height-startY -1) {
+      this.y = startY+1;
+  }
 };
+
+Bullet.prototype.destroy = function (index) {
+  this.index = index;
+  this.destroyed = true;
+}
 
 var ghostTypes = {
   redGhost: {
@@ -311,7 +330,6 @@ var weapons = {
       angularDistance = spread/bullets;
       for (var i=0; i < bullets; i=i+1) {
         toReturn.push(new Bullet(x,y,[Math.cos(startAngle), Math.sin(startAngle)], speed));
-        console.log(startAngle);
         startAngle = startAngle + angularDistance;
       }
       return toReturn;

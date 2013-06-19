@@ -48,12 +48,23 @@ function getRandomTile(world, type, excluding) {
   return getRandomTile(world, type);
 }
 
-function Tile (tileInfo,posX,posY) {
-  var that = this;
-  this.type = tileInfo;
-  this.posX = posX;
-  this.posY = posY;
+function insertTile(tile, redrawTile){
+  //inserts tile at a position in the world (optional: redraws it)
+  var i, j, tempTile;
+  world.data[tile.posY][tile.posX] = tile;
+
+  if (redrawTile){
+    for (i =0; i<3; i=i+1){
+      for (j=0; j<3; j=j+1){
+        if (tileExists(tile.posX+j-1, tile.posY+i-1)){
+          tempTile = new Tile(world.data[tile.posY+i-1][tile.posX+j-1].type, tile.posX+j-1, tile.posY+i-1); 
+          tempTile.drawTile();
+        }
+      }
+    }
+  }
 }
+
 
 function oppositeDirection(direction){
   switch (direction) {
@@ -72,6 +83,22 @@ function oppositeDirection(direction){
   return false;
 }
 
+function Tile (tileInfo,posX,posY) {
+  var that = this;
+  this.type = tileInfo;
+  this.posX = posX;
+  this.posY = posY;
+  this.hitPoints = 10;
+}
+
+Tile.prototype.update = function (damage) {
+  this.hitPoints = this.hitPoints - damage;
+  if (this.hitPoints <= 0) {
+    newTile = new Tile ('open', this.posX, this.posY);
+    insertTile(newTile, true);
+  }
+}
+
 Tile.prototype.getTilePosition = function(){
   //gets tile x,y coords
   return {x:this.posX*tileSize + startX, y:this.posY*tileSize + startY};
@@ -83,10 +110,16 @@ Tile.prototype.getTileCenter = function(){
 };
   //////////////////////////////////////////////TILE GETTERS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 Tile.prototype.upper = function(){
+  if (this.posY ===0 && !this.isWall()) {
+    return getTile(this.posX, world.data.length-1);
+  }
   return getTile(this.posX,this.posY-1);
 };
 
 Tile.prototype.lower = function(){
+  if (this.posY ===world.data.length-1 && !this.isWall()) {
+    return getTile(this.posX, 0);
+  }
   return getTile(this.posX,this.posY+1);
 };
 
