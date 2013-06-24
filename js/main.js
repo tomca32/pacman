@@ -14,52 +14,12 @@ var DEBUG = {
 	PATH: true,
 	PATHS: {}
 };
-
+var world, map = classicMap;
 function getMousePos(c, e) {
     var rect = c.getBoundingClientRect();
     return {x: e.clientX - rect.left,y: e.clientY - rect.top};
 }
-var world,
-	map = {
-	bgColor: "rgb(0,0,0)",
-	wallColor: "rgb(0,34,255)",
-	pelletColor: "rgb(255,255,0)",
-	boosterColor: "rgb(255,60,0)",
-	gateColor: "rgba(255,255,255, 0.5)",
-	speed: 10,
-	data: [
-	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-	"XooooooooooooXXooooooooooooX", 
-	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
-	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
-	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
-	"XooooooooooooooooooooooooooX", 
-	"XoXXXXoXXoXXXXXXXXoXXoXXXXoX", 
-	"XoXXXXoXXoXXXXXXXXoXXoXXXXoX",
-	"XooooooXXooooXXooooXXooooooX", 
-	"XXXXXXoXXXXX.XX.XXXXXoXXXXXX", 
-	".....XoXXXXX.XX.XXXXXoX.....",
-	".....XoXX..........XXoX.....",
-	".....XoXX.XXXGGXXX.XXoX.....",
-	"XXXXXXoXX.XEEEEEEX.XXoXXXXXX",
-	"......o...XEEEEEEX...o......",
-	"XXXXXXoXX.XEEEEEEX.XXoXXXXXX",
-	".....XoXX.XXXXXXXX.XXoX.....",
-	".....XoXX.....S....XXoX.....",
-	".....XoXX.XXXXXXXX.XXoX.....",
-	"XXXXXXoXX.XXXXXXXX.XXoXXXXXX",
-	"XooooooooooooXXooooooooooooX",
-	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX",
-	"XoXXXXoXXXXXoXXoXXXXXoXXXXoX",
-	"XoooXXooooooo..oooooooXXoooX",
-	"XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
-	"XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
-	"XooooooXXooooXXooooXXooooooX",
-	"XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
-	"XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
-	"XooooooooooooooooooooooooooX",
-	"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
-};
+
 
 function getTileSize(map, canvasWidth, canvasHeight) {
 	//calculates tile dimensions
@@ -331,7 +291,19 @@ function changeMovement(entity, direction){
 	entity.nextMove = direction;
 }
 
-
+function renderPaths() {
+	var debugCanvas = document.getElementById('debugCanvas');
+	var bugctx = debugCanvas.getContext('2d');
+	bugctx.clearRect(0,0,debugCanvas.width,debugCanvas.height);
+	_.each(DEBUG.PATHS, function(debugPath) {
+		bugctx.fillStyle = debugPath.color;
+		bugctx.globalAlpha = 0.2;
+		_.each(debugPath.path, function(p){
+			bugctx.fillRect(p[0]*tileSize+startX,p[1]*tileSize+startY,tileSize,tileSize);
+		});
+	});
+	bugctx.globalAlpha = 1;
+}
 
 
 
@@ -349,11 +321,19 @@ function resizeMap() {
 		editorCanvas.width = cW;
 		editorCanvas.height = cH;
 	}
+	if ($('#debugCanvas').length) {
+		debugCanvas.width = cW;
+		debugCanvas.height = cH;
+		renderPaths();
+	}
 	drawWorld(world);
 }
 
 //ACTUAL GAME
 function startGame() {
+	world = parseMap(map);
+	drawWorld(world);
+	if ($('#gameCanvas').length) {gameArea.removeChild(document.getElementById('gameCanvas'));}
 	//GAME SETUP
 	var game = document.createElement("canvas"),
 			gameOver = false,
@@ -362,18 +342,15 @@ function startGame() {
 			enemies = [],
 			idleEnemies = [], activeEnemies = [], bullets = [], toRemove = [],ghostStart;
 	ghostStart = randomTileFromArray(world.ghostStart);
-	console.log(ghostStart);
-	//enemies.push(spawnGhost(ghostTypes.redGhost, player));
-	//enemies.push(spawnGhost(ghostTypes.greenGhost, player));
+	enemies.push(spawnGhost(ghostTypes.redGhost, player));
+	enemies.push(spawnGhost(ghostTypes.greenGhost, player));
 	enemies.push(spawnGhost(ghostTypes.blueGhost, player));
-	console.log(enemies[0].tile);
 	_.each(enemies, function(e){
 		idleEnemies.push(e);
 	});
 	gameInProgress = true;
 	gc = game.getContext('2d');
 	$('.options').css({display:'none'});
-
 	game.id = "gameCanvas";
 	game.height = mapCanvas.height;
 	game.width = mapCanvas.width;
@@ -395,7 +372,7 @@ function startGame() {
 				changeMovement(player, 'down');
 				break;
 			case 32:
-				var newBullets = player.fire(tileSize * world.speed*3);
+				var newBullets = player.fire();
 				_.each (newBullets, function(b) {
 					bullets.push(b);
 
@@ -406,7 +383,6 @@ function startGame() {
 	//END GAME SETUP
 
 	function updateEntity(entity, dt) {
-		console.log(entity.tile);
 		if (entity.x < startX) {
 			entity.x = gameCanvas.width-1-startX;
 		} else if (entity.x > gameCanvas.width-startX -1) {
@@ -420,13 +396,11 @@ function startGame() {
 		entity.tile = getTileAt(entity.x, entity.y);
 		if (entity.inTileCenter(0.009 * entity.speed/tileSize)) {
 				
-			if (entity.isGhost && entity.initialized) {
+			if (entity.isGhost) {
 				if (!(entity.tile.posX === entity.oldTile.posX && entity.tile.posY === entity.oldTile.posY) || entity.path.length <1){
 					if (entity.toStep <= 0 || entity.path.length <1){
-						entity.centerEntity();
 						entity.init();
 					} else {
-						entity.centerEntity();
 						entity.step();
 					}
 					entity.oldTile = entity.tile;
@@ -448,6 +422,7 @@ function startGame() {
 				}
 			}
 		}
+		entity.centerEntity();
 		if (entity.moving) {
 			moveEntity(entity, dt);	
 			
@@ -464,7 +439,7 @@ function startGame() {
 
 	function update(dt) {
 		updateEntity(player, dt);
-		_.each(enemies, function(enemy){
+		_.each(activeEnemies, function(enemy){
 			updateEntity(enemy,dt);
 		});
 		_.each(bullets, function(bullet){
@@ -496,7 +471,6 @@ function startGame() {
 			gameOver = 'win';
 		} else {
 			_.each(enemies, function(enemy){
-				//if (player.tile.posX === enemy.tile.posX && player.tile.posY === enemy.tile.posY) {
 				if (collision(player, enemy)) {
 					//gameOver = 'loser';
 				}
@@ -526,17 +500,7 @@ function startGame() {
 			bullet.draw();
 		});
 		if (DEBUG.PATH) {
-			var debugCanvas = document.getElementById('debugCanvas');
-    	var bugctx = debugCanvas.getContext('2d');
-			bugctx.clearRect(0,0,debugCanvas.width,debugCanvas.height);
-			_.each(DEBUG.PATHS, function(debugPath) {
-				bugctx.fillStyle = debugPath.color;
-				bugctx.globalAlpha = 0.2;
-				_.each(debugPath.path, function(p){
-					bugctx.fillRect(p[0],p[1],tileSize,tileSize);
-				});
-			});
-			bugctx.globalAlpha = 1;
+			renderPaths();
 		}
 	}
 
@@ -571,6 +535,7 @@ function startGame() {
 
 		if (resize){
 			resizeMap();
+
 			game.height = mapCanvas.height;
 			game.width = mapCanvas.width;
 			player.x = player.tile.getTilePosition().x + tileSize/2;
@@ -581,6 +546,7 @@ function startGame() {
 				e.y = e.tile.getTilePosition().y + tileSize/2;
 				e.speed = tileSize*world.speed;
 			});
+			renderPaths();
 			resize = false;
 		}
 		if (gameOver) {
@@ -590,7 +556,7 @@ function startGame() {
 		}
 	}
 	var spawnTime = 0;
-	main();
+	if (!gameOver) main();
 	
 }
 

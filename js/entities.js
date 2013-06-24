@@ -23,9 +23,9 @@ Entity.prototype.update = function (){
 
 Entity.prototype.centerEntity = function () {
   var c = this.tile.getTileCenter();
-  if (this.moving === 'up' || this.moving === 'down'){
+  if (this.orientation === 'up' || this.orientation === 'down'){
     this.x = c.x;
-  } else if (this.moving === 'left' || this.moving === 'right') {
+  } else if (this.orientation === 'left' || this.orientation === 'right') {
     this.y = c.y; 
   } else {
     this.x = c.x;
@@ -112,8 +112,8 @@ Pacman.prototype.drawPacman = function(){
     gc.closePath();
     gc.fill();
 }
-Pacman.prototype.fire = function(speed){
-  return this.weapon.fire(this.x, this.y, this.orientation, speed)
+Pacman.prototype.fire = function(){
+  return this.weapon.fire(this.x, this.y, this.orientation, this.weapon.bulletSpeed*tileSize*world.speed);
 }
 ///////////////////////////////////////////GHOST//////////////////////////////////////////////////
 Ghost.prototype = new Entity();
@@ -128,13 +128,11 @@ function Ghost (x,y,tile,speed,color, tactics, target) {
   this.path = [];
   this.oldTile = tile;
   this.tactics = tactics;
-  this.initialized = false;
   this.target = target;
 
 
 }
 Ghost.prototype.updatePath = function() {
-  console.log(this.orientation);
   this.path = this.tile.path(this, this.tactics(this.target));
   if (this.path.length < 1) {
     this.path = this.tile.path(this, this.target.tile);
@@ -314,7 +312,7 @@ var ghostTypes = {
 var weapons = {
   shotgun: {
     frame: 0,
-
+    bulletSpeed: 3,
     fire: function(x,y,direction, speed){
       var toReturn = [], angle, startAngle, angularDistance, spread = Math.PI/12, bullets = 10;
       switch (direction) {

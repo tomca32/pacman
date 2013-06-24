@@ -590,7 +590,7 @@ Tile.prototype.path = function(actor, endTile) {
       while (current.par){
         if (DEBUG.PATH) {
           
-          DEBUG.PATHS[actor.color].path.push([current.posX * tileSize + startX, current.posY * tileSize + startY]);
+          DEBUG.PATHS[actor.color].path.push([current.posX, current.posY]);
         }
         ret.push(current.par.determineDirection(current));
         current = current.par;
