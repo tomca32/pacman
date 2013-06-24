@@ -121,7 +121,7 @@ Ghost.prototype.constructor = Ghost;
 function Ghost (x,y,tile,speed,color, tactics, target) {
 
   Entity.call(this, x,y,tile,speed,color);
-  this.steps = 10;
+  this.steps = 20;
   this.isGhost = true;
   this.illegalTile = false;
   this.toStep = 5;
@@ -134,6 +134,7 @@ function Ghost (x,y,tile,speed,color, tactics, target) {
 
 }
 Ghost.prototype.updatePath = function() {
+  console.log(this.orientation);
   this.path = this.tile.path(this, this.tactics(this.target));
   if (this.path.length < 1) {
     this.path = this.tile.path(this, this.target.tile);
@@ -149,6 +150,10 @@ Ghost.prototype.init = function() {
 
 Ghost.prototype.step = function() {
   this.moving = _.first(this.path);
+  if (this.moving) {
+    this.orientation = this.moving;  
+  }
+  this.illegalTile = this.tile.checkDirection(oppositeDirection(this.orientation));
   this.path = _.rest(this.path);
   this.toStep = this.toStep -1;
 };

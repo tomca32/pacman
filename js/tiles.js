@@ -109,6 +109,11 @@ Tile.prototype.getTileCenter = function(){
   var pos = this.getTilePosition();
   return {x:pos.x+tileSize/2, y: pos.y +tileSize/2};
 };
+Tile.prototype.isSame = function (other) {
+  //determines if given tile is the same as this one
+  if (this.posX === other.posX && this.posY === other.posY) return true;
+  return false;
+}
   //////////////////////////////////////////////TILE GETTERS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 Tile.prototype.upper = function(){
   if (this.posY ===0 && !this.isWall()) {
@@ -157,16 +162,16 @@ Tile.prototype.checkDirection = function(direction) {
 
 Tile.prototype.determineDirection = function(targetTile) {
   //returns the direction to target
-  if (this.posX < targetTile.posX || (this.posX === 0 && this.posY === targetTile.posY && targetTile.posX === world.data[0].length-1 && !this.isWall() && !targetTile.isWall())){
+  if (targetTile.isSame(this.right())){
     return 'right';
   } 
-  if (this.posX > targetTile.posX || (targetTile.posX === 0 && this.posY === targetTile.posY && this.posX === world.data[0].length-1 && !this.isWall() && !targetTile.isWall())) {
+  if (targetTile.isSame(this.left())) {
     return 'left';
   }
-  if (this.posY < targetTile.posY) {
+  if (targetTile.isSame(this.lower())) {
     return 'down';
   }
-  if (this.posY > targetTile.posY) {
+  if (targetTile.isSame(this.upper())) {
     return 'up';
   }
   return false;
@@ -178,7 +183,7 @@ Tile.prototype.getValidNeighbours = function(passGate, illegalTile) {
   function valid(tile) {
     if (tile) {
       if (illegalTile){
-        if (illegalTile.posX === tile.posX && illegalTile.posY === tile.posY) {
+        if (tile.isSame(illegalTile)) {
           return false;
         }
       }
@@ -597,7 +602,7 @@ Tile.prototype.path = function(actor, endTile) {
     openList.splice(openList.indexOf(current),1); //removing from openList
     closedList.push(current);
 
-    neighbours = current.getValidNeighbours(actor.isGhost, actor.illegalTile);
+    neighbours = current.getValidNeighbours(actor.isGhost, actor.tile.checkDirection(oppositeDirection(actor.orientation)));
     nLength = neighbours.length;
     for (i = 0; i < nLength; i=i+1) {
      neighbour = neighbours[i];

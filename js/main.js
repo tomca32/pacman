@@ -42,7 +42,7 @@ var world,
 	".....XoXX..........XXoX.....",
 	".....XoXX.XXXGGXXX.XXoX.....",
 	"XXXXXXoXX.XEEEEEEX.XXoXXXXXX",
-	"T.....o...XEEEEEEX...o.....T",
+	"......o...XEEEEEEX...o......",
 	"XXXXXXoXX.XEEEEEEX.XXoXXXXXX",
 	".....XoXX.XXXXXXXX.XXoX.....",
 	".....XoXX.....S....XXoX.....",
@@ -363,8 +363,8 @@ function startGame() {
 			idleEnemies = [], activeEnemies = [], bullets = [], toRemove = [],ghostStart;
 	ghostStart = randomTileFromArray(world.ghostStart);
 	console.log(ghostStart);
-	enemies.push(spawnGhost(ghostTypes.redGhost, player));
-	enemies.push(spawnGhost(ghostTypes.greenGhost, player));
+	//enemies.push(spawnGhost(ghostTypes.redGhost, player));
+	//enemies.push(spawnGhost(ghostTypes.greenGhost, player));
 	enemies.push(spawnGhost(ghostTypes.blueGhost, player));
 	console.log(enemies[0].tile);
 	_.each(enemies, function(e){
@@ -406,14 +406,13 @@ function startGame() {
 	//END GAME SETUP
 
 	function updateEntity(entity, dt) {
-
+		console.log(entity.tile);
 		if (entity.x < startX) {
 			entity.x = gameCanvas.width-1-startX;
 		} else if (entity.x > gameCanvas.width-startX -1) {
 			entity.x = startX+1;
 		}
 		if (entity.y < startY) {
-			console.log('blah');
 			entity.y = gameCanvas.height-1-startY;
 		} else if (entity.y > gameCanvas.height-startY -1) {
 			entity.y = startY+1;
@@ -431,7 +430,7 @@ function startGame() {
 						entity.step();
 					}
 					entity.oldTile = entity.tile;
-					entity.illegalTile = entity.oldTile;
+					//entity.illegalTile = entity.oldTile;
 					
 				}
 			} else {
@@ -499,7 +498,7 @@ function startGame() {
 			_.each(enemies, function(enemy){
 				//if (player.tile.posX === enemy.tile.posX && player.tile.posY === enemy.tile.posY) {
 				if (collision(player, enemy)) {
-					gameOver = 'loser';
+					//gameOver = 'loser';
 				}
 			});
 		}
