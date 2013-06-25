@@ -256,10 +256,7 @@ function startEditor(){
 }
 
 //GAME FUNCTIONS
-function randomTileFromArray(arr) {
-	var len = arr.length;
-	return arr[randomInt(0, len-1)];
-}
+
 
 function spawnGhost(ghostType, target){
 	var tile = randomTileFromArray(world.ghostStart);
@@ -373,8 +370,6 @@ function startGame() {
 	function update(dt) {
 		player.update(dt);
 		_.each(activeEnemies, function(enemy){
-			if (enemy.dead) {
-			}
 			enemy.update(dt);
 		});
 		_.each(bullets, function(bullet){
@@ -383,6 +378,10 @@ function startGame() {
 		var bulLength = bullets.length;
 		var eneLength = enemies.length;
 		for (var i = 0; i< bulLength; i = i +1) {
+			if (bullets[i].destroyed) {
+				toRemove.bullets.indices.push(i);
+				continue;
+			}
 			for (var j = 0; j < eneLength; j = j + 1) {
 				bullets[i].collide(enemies[j]);
 			}
@@ -413,6 +412,7 @@ function startGame() {
 	}
 
 	function removal() {
+		console.log(bullets);
 		_.each(toRemove, function(s){
 			s.indices = _.sortBy(s.indices, function(e){return e;});
 			for (var i = s.indices.length; i > 0; i = i - 1) {

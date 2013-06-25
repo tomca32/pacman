@@ -184,6 +184,7 @@ Pacman.prototype.drawPacman = function(){
     gc.fill();
 }
 Pacman.prototype.fire = function(){
+
   return this.weapon.fire(this.x, this.y, this.orientation, this);
 
 }
@@ -305,6 +306,7 @@ function Bullet (x,y,direction, speed) {
   this.damage = 1;
   this.speed = speed;
   this.hitsGhosts = false;
+  this.destroyed = false;
 }
 
 Bullet.prototype.draw = function() {
@@ -345,11 +347,12 @@ function Zap (x,y,direction,owner) {
   this.owner = owner;
   this.tiles = this.getTiles();
   this.time = 5;
+  this.destroyed = false;
 }
 
 Zap.prototype.step = function (dt) {
   if (this.time <0) {
-    //this.destroy();
+    this.destroyed = true;
   } else {
     this.direction = this.owner.orientation;
     this.x = this.owner.x;
@@ -489,7 +492,7 @@ var ghostTypes = {
 
 var weapons = {
   shotgun: {
-    frame: 0,
+    delay:3000,
     bulletSpeed: 3,
     fire: function(x,y,direction, speed){
       var toReturn = [], angle, startAngle, angularDistance, spread = Math.PI/12, bullets = 10;
@@ -517,6 +520,7 @@ var weapons = {
     }
   },
   zapGun: {
+    delay: 10000,
     fire: function (x,y,direction,owner) {
       return [new Zap(x,y,direction, owner)];
     }
