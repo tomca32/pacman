@@ -113,7 +113,7 @@ function parseMap(map){
 				break;
 
 				case "E":
-				newTile = new Tile("open",j,i);
+				newTile = new Tile("enemy",j,i);
 				world.ghostStart.push(newTile);
 				break;
 			}
@@ -374,7 +374,6 @@ function startGame() {
 		player.update(dt);
 		_.each(activeEnemies, function(enemy){
 			if (enemy.dead) {
-				toRemove.enemies.indices.push(_.indexOf(activeEnemies, enemy));
 			}
 			enemy.update(dt);
 		});
@@ -418,16 +417,10 @@ function startGame() {
 			s.indices = _.sortBy(s.indices, function(e){return e;});
 			for (var i = s.indices.length; i > 0; i = i - 1) {
 				s.arr.splice(s.indices[i], 1);
+				console.log(s.indices, activeEnemies);
 			}
 			s.indices = [];
 		});
-		// toRemove = _.sortBy(toRemove, function(e){
-		// 	return e.index;
-		// });
-		// for (var i = toRemove.length-1; i>=0; i = i - 1){
-		// 	bullets.splice(toRemove[i].index, 1);
-		// }
-		// toRemove = [];
 	}
 
 	function render() {

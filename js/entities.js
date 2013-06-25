@@ -107,6 +107,13 @@ Entity.prototype.inTileCenter = function(tolerance){
   return false;
 };
 
+Entity.prototype.hit = function (damage) {
+
+  this.HP = this.HP - damage;
+  console.log(this.HP);
+  if (this.HP<=0) this.die();
+}
+
 
 ////////////////////////////////////////////////PACMAN////////////////////////////////////////////////////////
 Pacman.prototype = new Entity();
@@ -193,14 +200,21 @@ function Ghost (x,y,tile,speed,color, tactics, target) {
   this.path = [];
   this.oldTile = tile;
   this.tactics = tactics;
+  this.defaultTarget = target;
   this.target = target;
+  this.defaultHP = 10;
+  this.HP = 10;
 
 
 }
 Ghost.prototype.updatePath = function() {
-  this.path = this.tile.path(this, this.tactics(this.target));
-  if (this.path.length < 1) {
-    this.path = this.tile.path(this, this.target.tile);
+  if (this.target.hasOwnProperty('type')) {
+    this.path = this.tile.path(this, this.target);
+  } else {
+    this.path = this.tile.path(this, this.tactics(this.target));
+    if (this.path.length < 1) {
+      this.path = this.tile.path(this, this.target.tile);
+    }
   }
 };
 
@@ -223,25 +237,28 @@ Ghost.prototype.step = function() {
 
 Ghost.prototype.die = function () {
   this.dead = true;
+  this.target = randomTileFromArray(world.ghostStart);
 }
 
 Ghost.prototype.drawGhost = function () {
-  gc.fillStyle = this.color;
   var x = this.x,
-      y = this.y;
-  gc.beginPath();
-  gc.arc(x,y -tileSize/6, tileSize*0.6, 0, Math.PI, true);
-  gc.moveTo(x - tileSize*0.6, y-tileSize/4);
-  gc.lineTo(x- tileSize *0.6, y+ tileSize*0.6);
-  gc.lineTo(x- tileSize *0.4, y+ tileSize*0.4);
-  gc.lineTo(x- tileSize *0.2, y+ tileSize*0.6);
-  gc.lineTo(x, y+ tileSize*0.4);
-  gc.lineTo(x+ tileSize *0.2, y+ tileSize*0.6);
-  gc.lineTo(x+ tileSize *0.4, y+ tileSize*0.4);
-  gc.lineTo(x+ tileSize *0.6, y+ tileSize*0.6);
-  gc.lineTo(x+ tileSize *0.6, y- tileSize/4);
-  gc.closePath();
-  gc.fill();
+  y = this.y;
+  if (!this.dead) {
+    gc.fillStyle = this.color;
+    gc.beginPath();
+    gc.arc(x,y -tileSize/6, tileSize*0.6, 0, Math.PI, true);
+    gc.moveTo(x - tileSize*0.6, y-tileSize/4);
+    gc.lineTo(x- tileSize *0.6, y+ tileSize*0.6);
+    gc.lineTo(x- tileSize *0.4, y+ tileSize*0.4);
+    gc.lineTo(x- tileSize *0.2, y+ tileSize*0.6);
+    gc.lineTo(x, y+ tileSize*0.4);
+    gc.lineTo(x+ tileSize *0.2, y+ tileSize*0.6);
+    gc.lineTo(x+ tileSize *0.4, y+ tileSize*0.4);
+    gc.lineTo(x+ tileSize *0.6, y+ tileSize*0.6);
+    gc.lineTo(x+ tileSize *0.6, y- tileSize/4);
+    gc.closePath();
+    gc.fill();
+  }
   this.drawEyes(x,y);
 };
 
@@ -259,7 +276,11 @@ Ghost.prototype.drawEyes = function (x,y) {
 
   //Pupils
   //vector calculation for determining direction to target
-  var eyesDirection = [-this.tile.posX + this.target.tile.posX, -this.tile.posY + this.target.tile.posY]; //not sure why - +
+  if (this.target.hasOwnProperty('tile')){
+    var eyesDirection = [-this.tile.posX + this.target.tile.posX, -this.tile.posY + this.target.tile.posY]; //not sure why - +  
+  } else {
+    var eyesDirection = [-this.tile.posX + this.target.posX, -this.tile.posY + this.target.posY]; //not sure why - +    
+  }
   var length = Math.sqrt(Math.pow(eyesDirection[0],2) + Math.pow(eyesDirection[1],2));
   eyesDirection = _.map(eyesDirection, function(v){
     if (length === 0) return 0;
@@ -319,6 +340,7 @@ function Zap (x,y,direction,owner) {
   this.y = y;
   this.direction = direction;
   this.range = 5;
+  this.damage = 1000;
   this.hitsGhosts = true;
   this.owner = owner;
   this.tiles = this.getTiles();
@@ -338,10 +360,11 @@ Zap.prototype.step = function (dt) {
 };
 
 Zap.prototype.collide = function (enemy) {
+  var that = this;
   _.each(this.tiles, function (t){
     if (t.isSame(enemy.tile)) {
       if (enemy.isGhost) {
-        enemy.die();
+        enemy.hit(that.damage);
       }
     }
   });
@@ -432,6 +455,7 @@ var ghostTypes = {
     tactics: function (target) {
       var currentTarget = target.tile, distance = 5, toReturn;
       function getTargetTile(target) {
+        console.log(target.tile)
         var validTiles = [];
         while (distance > 0) {
           if (currentTarget.checkDirection(oppositeDirection(target.orientation))) {

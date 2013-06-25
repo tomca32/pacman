@@ -15,6 +15,11 @@ function tileExists(posX,posY){
 return true;
 }
 
+function randomTileFromArray(arr) {
+  var len = arr.length;
+  return arr[randomInt(0, len-1)];
+}
+
 function getTile(posX,posY){
   //gets tile by grid position
   if (tileExists(posX,posY)){
