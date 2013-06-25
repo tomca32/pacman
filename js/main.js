@@ -350,11 +350,11 @@ function startGame() {
 				break;
 			case 32:
 				var newBullets = player.fire();
-				_.each (newBullets, function(b) {
-					bullets.push(b);
-
-				});
-				console.log(bullets);
+				if (newBullets) {
+					_.each (newBullets, function(b) {
+						bullets.push(b);
+					});
+				}
 				break;
 		}
 	});
@@ -412,7 +412,6 @@ function startGame() {
 	}
 
 	function removal() {
-		console.log(bullets);
 		_.each(toRemove, function(s){
 			s.indices = _.sortBy(s.indices, function(e){return e;});
 			for (var i = s.indices.length; i > 0; i = i - 1) {

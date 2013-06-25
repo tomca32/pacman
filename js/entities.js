@@ -33,6 +33,13 @@ Entity.prototype.update = function (dt){
     if (this.inTileCenter(0.009 * this.speed/tileSize)) {
         
       if (this.isGhost) {
+        if (this.tile.type === 'enemy' && this.HP < this.defaultHP) {
+          this.HP = this.HP + 10;
+          if (this.HP >= this.defaultHP) {
+            this.dead = false;
+            this.target = this.defaultTarget;
+          }
+        }
         if (!(this.tile.posX === this.oldTile.posX && this.tile.posY === this.oldTile.posY) || this.path.length <1){
           if (this.toStep <= 0 || this.path.length <1){
             this.init();
@@ -61,7 +68,9 @@ Entity.prototype.update = function (dt){
     this.centerEntity();
     if (this.moving) {
       this.moveEntity(dt); 
-      
+    }
+    if (this.weapon) {
+      this.weapon.update(dt);
     }
 };
 
@@ -108,9 +117,8 @@ Entity.prototype.inTileCenter = function(tolerance){
 };
 
 Entity.prototype.hit = function (damage) {
-
+  if (this.dead) return;
   this.HP = this.HP - damage;
-  console.log(this.HP);
   if (this.HP<=0) this.die();
 }
 
@@ -124,7 +132,7 @@ function Pacman (x,y,tile,speed, color) {
   this.frame=0;
   this.closing = false;
   this.isGhost = false;
-  this.weapon = weapons.zapGun;
+  this.weapon = new Weapon(weapons.zapGun);
 
 }
 Pacman.prototype.drawPacman = function(){
@@ -184,7 +192,8 @@ Pacman.prototype.drawPacman = function(){
     gc.fill();
 }
 Pacman.prototype.fire = function(){
-
+  if (this.weapon.delay > 0) return false;
+  this.weapon.delay = this.weapon.rof;
   return this.weapon.fire(this.x, this.y, this.orientation, this);
 
 }
@@ -244,22 +253,22 @@ Ghost.prototype.die = function () {
 Ghost.prototype.drawGhost = function () {
   var x = this.x,
   y = this.y;
-  if (!this.dead) {
-    gc.fillStyle = this.color;
-    gc.beginPath();
-    gc.arc(x,y -tileSize/6, tileSize*0.6, 0, Math.PI, true);
-    gc.moveTo(x - tileSize*0.6, y-tileSize/4);
-    gc.lineTo(x- tileSize *0.6, y+ tileSize*0.6);
-    gc.lineTo(x- tileSize *0.4, y+ tileSize*0.4);
-    gc.lineTo(x- tileSize *0.2, y+ tileSize*0.6);
-    gc.lineTo(x, y+ tileSize*0.4);
-    gc.lineTo(x+ tileSize *0.2, y+ tileSize*0.6);
-    gc.lineTo(x+ tileSize *0.4, y+ tileSize*0.4);
-    gc.lineTo(x+ tileSize *0.6, y+ tileSize*0.6);
-    gc.lineTo(x+ tileSize *0.6, y- tileSize/4);
-    gc.closePath();
-    gc.fill();
-  }
+  gc.fillStyle = this.color;
+  gc.globalAlpha = this.HP/1000 + 1;
+  gc.beginPath();
+  gc.arc(x,y -tileSize/6, tileSize*0.6, 0, Math.PI, true);
+  gc.moveTo(x - tileSize*0.6, y-tileSize/4);
+  gc.lineTo(x- tileSize *0.6, y+ tileSize*0.6);
+  gc.lineTo(x- tileSize *0.4, y+ tileSize*0.4);
+  gc.lineTo(x- tileSize *0.2, y+ tileSize*0.6);
+  gc.lineTo(x, y+ tileSize*0.4);
+  gc.lineTo(x+ tileSize *0.2, y+ tileSize*0.6);
+  gc.lineTo(x+ tileSize *0.4, y+ tileSize*0.4);
+  gc.lineTo(x+ tileSize *0.6, y+ tileSize*0.6);
+  gc.lineTo(x+ tileSize *0.6, y- tileSize/4);
+  gc.closePath();
+  gc.fill();
+  gc.globalAlpha = 1;
   this.drawEyes(x,y);
 };
 
@@ -458,7 +467,6 @@ var ghostTypes = {
     tactics: function (target) {
       var currentTarget = target.tile, distance = 5, toReturn;
       function getTargetTile(target) {
-        console.log(target.tile)
         var validTiles = [];
         while (distance > 0) {
           if (currentTarget.checkDirection(oppositeDirection(target.orientation))) {
@@ -490,9 +498,21 @@ var ghostTypes = {
   }
 };
 
+function Weapon (weapon) {
+  this.delay = 0;
+  this.rof = weapon.rof;
+  this.fire = weapon.fire;
+  this.bulletSpeed = weapon.bulletSpeed === undefined ? false : weapon.bulletSpeed;
+}
+
+Weapon.prototype.update = function (dt) {
+  this.delay = this.delay - dt;
+  console.log(this.delay);
+}
+
 var weapons = {
   shotgun: {
-    delay:3000,
+    rof:1.5,
     bulletSpeed: 3,
     fire: function(x,y,direction, speed){
       var toReturn = [], angle, startAngle, angularDistance, spread = Math.PI/12, bullets = 10;
@@ -520,7 +540,7 @@ var weapons = {
     }
   },
   zapGun: {
-    delay: 10000,
+    rof: 10,
     fire: function (x,y,direction,owner) {
       return [new Zap(x,y,direction, owner)];
     }
