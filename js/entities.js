@@ -8,6 +8,7 @@ function collision (e1, e2) {
 
 function Entity (x,y,tile, speed, color) {
   //Entity constructor
+  this.dead = false;
   this.x = x;
   this.y = y;
   this.tile = tile;
@@ -17,8 +18,71 @@ function Entity (x,y,tile, speed, color) {
   this.color = color;
 }
 
-Entity.prototype.update = function (){
+Entity.prototype.update = function (dt){
+  if (this.x < startX) {
+      this.x = gameCanvas.width-1-startX;
+    } else if (this.x > gameCanvas.width-startX -1) {
+      this.x = startX+1;
+    }
+    if (this.y < startY) {
+      this.y = gameCanvas.height-1-startY;
+    } else if (this.y > gameCanvas.height-startY -1) {
+      this.y = startY+1;
+    }
+    this.tile = getTileAt(this.x, this.y);
+    if (this.inTileCenter(0.009 * this.speed/tileSize)) {
+        
+      if (this.isGhost) {
+        if (!(this.tile.posX === this.oldTile.posX && this.tile.posY === this.oldTile.posY) || this.path.length <1){
+          if (this.toStep <= 0 || this.path.length <1){
+            this.init();
+          } else {
+            this.step();
+          }
+          this.oldTile = this.tile;
+          //this.illegalTile = this.oldTile;
+          
+        }
+      } else {
 
+        if (tileIsWall(this.tile.checkDirection(this.moving))){
+          this.moving = false;
+          this.centerEntity();
+        }
+
+        if(!tileIsWall(this.tile.checkDirection(this.nextMove))) {
+          this.moving = this.nextMove;
+          if (this.nextMove){
+            this.orientation = this.nextMove;
+          }
+        }
+      }
+    }
+    this.centerEntity();
+    if (this.moving) {
+      this.moveEntity(dt); 
+      
+    }
+};
+
+Entity.prototype.moveEntity = function (dt){
+  switch (this.moving) {
+    case 'up':
+      this.y -= this.speed*dt;
+      break;
+
+    case 'down':
+      this.y += this.speed*dt;
+      break;
+
+    case 'left':
+      this.x -= this.speed*dt;
+      break;
+
+    case 'right':
+      this.x += this.speed*dt;
+      break;
+  }
 }
 
 Entity.prototype.centerEntity = function () {
@@ -53,7 +117,7 @@ function Pacman (x,y,tile,speed, color) {
   this.frame=0;
   this.closing = false;
   this.isGhost = false;
-  this.weapon = weapons.shotgun;
+  this.weapon = weapons.zapGun;
 
 }
 Pacman.prototype.drawPacman = function(){
@@ -113,7 +177,8 @@ Pacman.prototype.drawPacman = function(){
     gc.fill();
 }
 Pacman.prototype.fire = function(){
-  return this.weapon.fire(this.x, this.y, this.orientation, this.weapon.bulletSpeed*tileSize*world.speed);
+  return this.weapon.fire(this.x, this.y, this.orientation, this);
+
 }
 ///////////////////////////////////////////GHOST//////////////////////////////////////////////////
 Ghost.prototype = new Entity();
@@ -155,6 +220,10 @@ Ghost.prototype.step = function() {
   this.path = _.rest(this.path);
   this.toStep = this.toStep -1;
 };
+
+Ghost.prototype.die = function () {
+  this.dead = true;
+}
 
 Ghost.prototype.drawGhost = function () {
   gc.fillStyle = this.color;
@@ -214,6 +283,7 @@ function Bullet (x,y,direction, speed) {
   this.direction = direction;
   this.damage = 1;
   this.speed = speed;
+  this.hitsGhosts = false;
 }
 
 Bullet.prototype.draw = function() {
@@ -242,7 +312,91 @@ Bullet.prototype.step = function (dt) {
 Bullet.prototype.destroy = function (index) {
   this.index = index;
   this.destroyed = true;
+};
+
+function Zap (x,y,direction,owner) {
+  this.x = x;
+  this.y = y;
+  this.direction = direction;
+  this.range = 5;
+  this.hitsGhosts = true;
+  this.owner = owner;
+  this.tiles = this.getTiles();
+  this.time = 5;
 }
+
+Zap.prototype.step = function (dt) {
+  if (this.time <0) {
+    //this.destroy();
+  } else {
+    this.direction = this.owner.orientation;
+    this.x = this.owner.x;
+    this.y = this.owner.y;
+    this.time = this.time - dt;
+    this.tiles = this.getTiles();  
+  }
+};
+
+Zap.prototype.collide = function (enemy) {
+  _.each(this.tiles, function (t){
+    if (t.isSame(enemy.tile)) {
+      if (enemy.isGhost) {
+        enemy.die();
+      }
+    }
+  });
+}
+
+Zap.prototype.draw = function () {
+  
+  gc.beginPath();
+
+  function drawLightning (arr,d){
+    function drawAtRandom(x,y) {
+      gc.strokeStyle = "rgba("+randomInt(0,255)+","+randomInt(0,255)+","+randomInt(0,255)+",1)";
+      gc.lineWidth = 3;
+      var x = x + (tileSize/3)*randomInt(-1,1);
+      var y = y + (tileSize/3)*randomInt(-1,1);
+      gc.lineTo(x,y);
+    }
+
+    if (arr.length <=0) {
+      return;
+    } else {
+      var newT = arr.pop();
+      gc.moveTo(newT.getTileEnd(d).x,newT.getTileEnd(d).y);
+      drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
+      drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
+      drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
+      drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
+      drawLightning(arr,d);
+    }
+  }
+  drawLightning(this.tiles, this.direction);
+  gc.stroke();
+  gc.lineWidth = 1;
+
+};
+
+Zap.prototype.getTiles = function () {
+  var arr = [];
+  function tiles (t, d, r, a) {
+    var newT = t.checkDirection(d);
+    if (newT.isWall() || r<1) {
+      return a;
+    } else {
+      a.push(newT);
+      return tiles(newT,d,r-1, a);
+    }
+  }
+
+  return tiles (this.owner.tile, this.direction, this.range, arr);
+};
+
+Zap.prototype.destroy = function (index) {
+  this.index = index;
+  this.destroyed = true;
+};
 
 var ghostTypes = {
   redGhost: {
@@ -337,5 +491,11 @@ var weapons = {
       }
       return toReturn;
     }
+  },
+  zapGun: {
+    fire: function (x,y,direction,owner) {
+      return [new Zap(x,y,direction, owner)];
+    }
+
   }
 }

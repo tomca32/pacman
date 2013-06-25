@@ -109,11 +109,27 @@ Tile.prototype.getTileCenter = function(){
   var pos = this.getTilePosition();
   return {x:pos.x+tileSize/2, y: pos.y +tileSize/2};
 };
+
+Tile.prototype.getTileEnd = function (direction) {
+//returns the end pixels of a tile in a given direction
+  var p = this.getTileCenter();
+  switch (direction) {
+    case "up":
+      return {x:p.x, y:p.y-tileSize/2};
+    case "down":
+      return {x:p.x, y:p.y+tileSize/2};
+    case "left":
+      return {x:p.x-tileSize/2, y:p.y};
+    case "right":
+      return {x:p.x+tileSize/2, y:p.y};  
+  }
+};
+
 Tile.prototype.isSame = function (other) {
   //determines if given tile is the same as this one
   if (this.posX === other.posX && this.posY === other.posY) return true;
   return false;
-}
+};
   //////////////////////////////////////////////TILE GETTERS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 Tile.prototype.upper = function(){
   if (this.posY ===0 && !this.isWall()) {

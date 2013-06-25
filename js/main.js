@@ -266,27 +266,6 @@ function spawnGhost(ghostType, target){
 	return new Ghost (tile.getTileCenter().x, tile.getTileCenter().y, tile, tileSize*world.speed, ghostType.color, ghostType.tactics, target);
 }
 
-
-function moveEntity(entity, dt){
-	switch (entity.moving) {
-		case 'up':
-			entity.y -= entity.speed*dt;
-			break;
-
-		case 'down':
-			entity.y += entity.speed*dt;
-			break;
-
-		case 'left':
-			entity.x -= entity.speed*dt;
-			break;
-
-		case 'right':
-			entity.x += entity.speed*dt;
-			break;
-	}
-}
-
 function changeMovement(entity, direction){
 	entity.nextMove = direction;
 }
@@ -340,7 +319,8 @@ function startGame() {
 			lastTime = Date.now(),
 			player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor),
 			enemies = [],
-			idleEnemies = [], activeEnemies = [], bullets = [], toRemove = [],ghostStart;
+			idleEnemies = [], activeEnemies = [], bullets = [], ghostStart,
+			toRemove = {enemies:{indices:[], arr:activeEnemies},bullets:{indices:[], arr:bullets}};
 	ghostStart = randomTileFromArray(world.ghostStart);
 	enemies.push(spawnGhost(ghostTypes.redGhost, player));
 	enemies.push(spawnGhost(ghostTypes.greenGhost, player));
@@ -377,58 +357,11 @@ function startGame() {
 					bullets.push(b);
 
 				});
+				console.log(bullets);
 				break;
 		}
 	});
 	//END GAME SETUP
-
-	function updateEntity(entity, dt) {
-		if (entity.x < startX) {
-			entity.x = gameCanvas.width-1-startX;
-		} else if (entity.x > gameCanvas.width-startX -1) {
-			entity.x = startX+1;
-		}
-		if (entity.y < startY) {
-			entity.y = gameCanvas.height-1-startY;
-		} else if (entity.y > gameCanvas.height-startY -1) {
-			entity.y = startY+1;
-		}
-		entity.tile = getTileAt(entity.x, entity.y);
-		if (entity.inTileCenter(0.009 * entity.speed/tileSize)) {
-				
-			if (entity.isGhost) {
-				if (!(entity.tile.posX === entity.oldTile.posX && entity.tile.posY === entity.oldTile.posY) || entity.path.length <1){
-					if (entity.toStep <= 0 || entity.path.length <1){
-						entity.init();
-					} else {
-						entity.step();
-					}
-					entity.oldTile = entity.tile;
-					//entity.illegalTile = entity.oldTile;
-					
-				}
-			} else {
-
-				if (tileIsWall(entity.tile.checkDirection(entity.moving))){
-					entity.moving = false;
-					entity.centerEntity();
-				}
-
-				if(!tileIsWall(entity.tile.checkDirection(entity.nextMove))) {
-					entity.moving = entity.nextMove;
-					if (entity.nextMove){
-						entity.orientation = entity.nextMove;
-					}
-				}
-			}
-		}
-		entity.centerEntity();
-		if (entity.moving) {
-			moveEntity(entity, dt);	
-			
-		}
-		entity.update();
-	}
 
 	function removePellet(tile) {
 		var newT = new Tile('open', tile.posX, tile.posY);
@@ -438,9 +371,12 @@ function startGame() {
 	}
 
 	function update(dt) {
-		updateEntity(player, dt);
+		player.update(dt);
 		_.each(activeEnemies, function(enemy){
-			updateEntity(enemy,dt);
+			if (enemy.dead) {
+				toRemove.enemies.indices.push(_.indexOf(activeEnemies, enemy));
+			}
+			enemy.update(dt);
 		});
 		_.each(bullets, function(bullet){
 			bullet.step(dt);
@@ -449,17 +385,14 @@ function startGame() {
 		var eneLength = enemies.length;
 		for (var i = 0; i< bulLength; i = i +1) {
 			for (var j = 0; j < eneLength; j = j + 1) {
-				if (collision(bullets[i], enemies[j])){
-					bullets[i].destroy(i);
-					toRemove.push(bullets[i]);
-				}
+				bullets[i].collide(enemies[j]);
 			}
 
 			var stupidWall = getTileAt(bullets[i].x, bullets[i].y); //CHANGE THIS
 			if (stupidWall && stupidWall.isWall() && !bullets[i].destroyed) {
-				bullets[i].destroy(i);
-				toRemove.push(bullets[i]);
-				stupidWall.update(bullets[i].damage);
+				// bullets[i].destroy(i);
+				// toRemove.push(bullets[i]);
+				// stupidWall.update(bullets[i].damage);
 			}
 		}
 		if (player.tile.type === 'pellet' || player.tile.type === 'booster') {
@@ -481,13 +414,20 @@ function startGame() {
 	}
 
 	function removal() {
-		toRemove = _.sortBy(toRemove, function(e){
-			return e.index;
+		_.each(toRemove, function(s){
+			s.indices = _.sortBy(s.indices, function(e){return e;});
+			for (var i = s.indices.length; i > 0; i = i - 1) {
+				s.arr.splice(s.indices[i], 1);
+			}
+			s.indices = [];
 		});
-		for (var i = toRemove.length-1; i>=0; i = i - 1){
-			bullets.splice(toRemove[i].index, 1);
-		}
-		toRemove = [];
+		// toRemove = _.sortBy(toRemove, function(e){
+		// 	return e.index;
+		// });
+		// for (var i = toRemove.length-1; i>=0; i = i - 1){
+		// 	bullets.splice(toRemove[i].index, 1);
+		// }
+		// toRemove = [];
 	}
 
 	function render() {
