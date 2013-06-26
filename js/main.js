@@ -315,7 +315,7 @@ function startGame() {
 			_.each(enemies, function(enemy){
 				if (!enemy.dead) {
 					if (collision(player, enemy) || player.tile.isSame(enemy.tile)) {
-						//gameOver = 'loser';
+						gameOver = 'loser';
 					}
 				}
 			});

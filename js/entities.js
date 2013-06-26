@@ -132,7 +132,7 @@ function Pacman (x,y,tile,speed, color) {
   this.frame=0;
   this.closing = false;
   this.isGhost = false;
-  this.weapon = new Weapon(weapons.shotgun);
+  this.weapon = new Weapon(weapons.zapGun);
 
 }
 Pacman.prototype.drawPacman = function(){
