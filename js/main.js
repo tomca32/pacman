@@ -59,88 +59,7 @@ function getStartY(){
 	return (cH - world.data.length*tileSize)/2;
 }
 
-function parseMap(map){
-	//parses map from a string
-	world = {
-		data: [],
-		pellets: 0,
-		bgColor: map.bgColor,
-		pelletColor: map.pelletColor,
-		boosterColor: map.boosterColor,
-		wallColor: map.wallColor,
-		speed: map.speed,
-		gateColor: map.gateColor,
-		ghostStart: []
-	};
-	var newTile, newLine, i, j, line, lineL, tile,
-			l = map.data.length;
-	for (i = 0; i <l; i=i+1) {
-		line = map.data[i];
-		lineL = line.length;
-		newLine = [];
-		for (j = 0; j < lineL; j=j+1) {
-			tile = map.data[i][j];
 
-			switch (tile) {
-				case "X":
-				newTile = new Tile ("wall", j, i);
-				break;
-
-				case ".":
-				newTile = new Tile ("open", j, i);
-				break;	
-
-				case "o":
-				newTile = new Tile ("pellet", j, i);
-				world.pellets = world.pellets + 1;
-				break;
-
-				case "O":
-				newTile = new Tile ("booster", j ,i);
-				break;
-
-				case "G":
-				newTile = new Tile("gate",j,i);
-				break;
-
-				case "T":
-				newTile = new Tile("tunnel",j,i);
-				break;
-
-				case "S":
-				newTile = new Tile("open",j,i);
-				world.playerStart = {x:j,y:i};
-				break;
-
-				case "E":
-				newTile = new Tile("enemy",j,i);
-				world.ghostStart.push(newTile);
-				break;
-			}
-			newLine.push(newTile);
-		}
-		world.data.push(newLine);
-	}
-	return world;
-}
-
-
-
-
-
-function drawWorld(world) {
-	var i, j, row, tile,
-		worldL = world.data.length;
-	ctx.fillStyle= world.bgColor;
-	ctx.fillRect(0,0,cW, cH);
-	for (i = 0; i < worldL; i=i+1){
-		row = world.data[i].length;
-		for (j = 0; j < row; j=j+1) {
-			tile = world.data[i][j];
-			tile.drawTile();
-		}
-	}
-}
 
 function drawEditor(tile, editor) {
 	var ctxed = document.getElementById('editorCanvas').getContext('2d'),
@@ -249,7 +168,7 @@ function startEditor(){
 		if (undoStack.length) {
 			var oldTile = undoStack.pop();
 			insertTile(oldTile);
-			drawWorld(world);
+			world.draw(ctx);
 		}
 	});
 
@@ -302,13 +221,12 @@ function resizeMap() {
 		debugCanvas.height = cH;
 		renderPaths();
 	}
-	drawWorld(world);
+	world.draw(ctx);
 }
 
 //ACTUAL GAME
 function startGame() {
-	world = parseMap(map);
-	drawWorld(world);
+	world.draw(ctx);
 	if ($('#gameCanvas').length) {gameArea.removeChild(document.getElementById('gameCanvas'));}
 	//GAME SETUP
 	var game = document.createElement("canvas"),
@@ -402,8 +320,10 @@ function startGame() {
 			gameOver = 'win';
 		} else {
 			_.each(enemies, function(enemy){
-				if (collision(player, enemy)) {
-					//gameOver = 'loser';
+				if (!enemy.dead) {
+					if (collision(player, enemy) || player.tile.isSame(enemy.tile)) {
+						gameOver = 'loser';
+					}
 				}
 			});
 		}
@@ -493,10 +413,10 @@ function startGame() {
 }
 
 $(window).load(function(){
-	world = parseMap(map);
+	world = new World(map);
 	startX = getStartX();
 	startY = getStartY();
-	drawWorld(world);
+	world.draw(ctx);
 
 	$(document).on('click','#editor', startEditor);
 	$(document).on('click','#startButton', startGame);

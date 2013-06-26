@@ -507,7 +507,6 @@ function Weapon (weapon) {
 
 Weapon.prototype.update = function (dt) {
   this.delay = this.delay - dt;
-  console.log(this.delay);
 }
 
 var weapons = {

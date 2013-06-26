@@ -654,3 +654,87 @@ Tile.prototype.path = function(actor, endTile) {
   } //end while
   return [];
 }
+
+function World (map) {
+  this.originalMap = map;
+  this.parse();
+}
+
+World.prototype.parse = function (map) {
+  var map = map === undefined ? this.originalMap : map,
+  newTile, newLine, i, j, line, lineL, tile,
+  l = map.data.length;
+
+  this.data = [];
+  this.pellets = 0;
+  this.bgColor = map.bgColor;
+  this.pelletColor = map.pelletColor;
+  this.boosterColor = map.boosterColor;
+  this.wallColor = map.wallColor;
+  this.speed = map.speed;
+  this.gateColor = map.gateColor;
+  this.ghostStart = [];
+
+
+  for (i = 0; i <l; i=i+1) {
+    line = map.data[i];
+    lineL = line.length;
+    newLine = [];
+    for (j = 0; j < lineL; j=j+1) {
+      tile = map.data[i][j];
+
+      switch (tile) {
+        case "X":
+        newTile = new Tile ("wall", j, i);
+        break;
+
+        case ".":
+        newTile = new Tile ("open", j, i);
+        break;  
+
+        case "o":
+        newTile = new Tile ("pellet", j, i);
+        this.pellets = this.pellets + 1;
+        break;
+
+        case "O":
+        newTile = new Tile ("booster", j ,i);
+        break;
+
+        case "G":
+        newTile = new Tile("gate",j,i);
+        break;
+
+        case "T":
+        newTile = new Tile("tunnel",j,i);
+        break;
+
+        case "S":
+        newTile = new Tile("open",j,i);
+        this.playerStart = {x:j,y:i};
+        break;
+
+        case "E":
+        newTile = new Tile("enemy",j,i);
+        this.ghostStart.push(newTile);
+        break;
+      }
+      newLine.push(newTile);
+    }
+    this.data.push(newLine);
+  }
+}
+
+World.prototype.draw = function (ctx) {
+  var i, j, row, tile,
+  worldL = this.data.length;
+  ctx.fillStyle= this.bgColor;
+  ctx.fillRect(0,0,cW, cH);
+  for (i = 0; i < worldL; i=i+1){
+    row = this.data[i].length;
+    for (j = 0; j < row; j=j+1) {
+      tile = this.data[i][j];
+      tile.drawTile();
+    }
+  }
+}
