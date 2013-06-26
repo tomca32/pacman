@@ -710,7 +710,7 @@ World.prototype.parse = function (map) {
         break;
 
         case "S":
-        newTile = new Tile("open",j,i);
+        newTile = new Tile("player",j,i);
         this.playerStart = {x:j,y:i};
         break;
 
@@ -738,3 +738,40 @@ World.prototype.draw = function (ctx) {
     }
   }
 }
+
+World.prototype.export = function () {
+  //Exports world into a map object
+  var e = {}, wL = world.data.length, rL = world.data[0].length;
+
+  e.bgCollor = this.bgColor;
+  e.pelletColor = this.pelletColor;
+  e.boosterColor = this.boosterColor;
+  e.wallColor = this.wallColor;
+  e.speed = this.speed;
+  e.gateColor = this.gateColor;
+  e.data = [];
+
+  for (var i = 0; i < wL; i = i + 1) {
+    e.data.push([]);
+    for (var j = 0; j<rL; j=j+1) {
+      if (_.has(tileDictionary, this.data[i][j].type)) {
+        e.data[i].push(tileDictionary[this.data[i][j].type]);
+      } else {
+        throw new Error("Tile Dictionary does not contain "+this.data[i][j].type);
+      }
+    }
+  }
+
+  return e;
+}
+
+var tileDictionary = {
+  wall: "X",
+  open: ".",
+  pellet: "o",
+  booster: "O",
+  gate: "G",
+  tunnel: "T",
+  player: "S",
+  enemy: "E"
+};
