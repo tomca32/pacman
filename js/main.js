@@ -303,13 +303,6 @@ function startGame() {
 			for (var j = 0; j < eneLength; j = j + 1) {
 				bullets[i].collide(enemies[j]);
 			}
-
-			var stupidWall = getTileAt(bullets[i].x, bullets[i].y); //CHANGE THIS
-			if (stupidWall && stupidWall.isWall() && !bullets[i].destroyed) {
-				// bullets[i].destroy(i);
-				// toRemove.push(bullets[i]);
-				// stupidWall.update(bullets[i].damage);
-			}
 		}
 		if (player.tile.type === 'pellet' || player.tile.type === 'booster') {
 			world.pellets = world.pellets - 1;
@@ -322,7 +315,7 @@ function startGame() {
 			_.each(enemies, function(enemy){
 				if (!enemy.dead) {
 					if (collision(player, enemy) || player.tile.isSame(enemy.tile)) {
-						gameOver = 'loser';
+						//gameOver = 'loser';
 					}
 				}
 			});
@@ -334,9 +327,8 @@ function startGame() {
 	function removal() {
 		_.each(toRemove, function(s){
 			s.indices = _.sortBy(s.indices, function(e){return e;});
-			for (var i = s.indices.length; i > 0; i = i - 1) {
+			for (var i = s.indices.length-1; i >= 0; i = i - 1) {
 				s.arr.splice(s.indices[i], 1);
-				console.log(s.indices, activeEnemies);
 			}
 			s.indices = [];
 		});

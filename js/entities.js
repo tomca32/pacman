@@ -132,7 +132,7 @@ function Pacman (x,y,tile,speed, color) {
   this.frame=0;
   this.closing = false;
   this.isGhost = false;
-  this.weapon = new Weapon(weapons.zapGun);
+  this.weapon = new Weapon(weapons.shotgun);
 
 }
 Pacman.prototype.drawPacman = function(){
@@ -327,8 +327,8 @@ Bullet.prototype.draw = function() {
 };
 
 Bullet.prototype.step = function (dt) {
-  this.x = this.x + this.direction[0]*dt*this.speed;
-  this.y = this.y + this.direction[1]*dt*this.speed;
+  this.x = this.x + this.direction[0]*dt*this.speed*tileSize;
+  this.y = this.y + this.direction[1]*dt*this.speed*tileSize;
   if (this.x < startX) {
       this.x = gameCanvas.width-1-startX;
   } else if (this.x > gameCanvas.width-startX -1) {
@@ -341,8 +341,23 @@ Bullet.prototype.step = function (dt) {
   }
 };
 
-Bullet.prototype.destroy = function (index) {
-  this.index = index;
+Bullet.prototype.collide = function (enemy) {
+  var tile = getTileAt(this.x, this.y);
+
+  if (tile.isWall() || tile.isGate()) {
+    tile.hit(this.damage);
+    this.destroy();
+  } else {
+    if (collision(this, enemy)) {
+      if (!enemy.isGhost) {
+        enemy.hit(this.damage);
+        this.destroy();
+      }
+    }
+  }
+};
+
+Bullet.prototype.destroy = function () {
   this.destroyed = true;
 };
 
@@ -380,7 +395,7 @@ Zap.prototype.collide = function (enemy) {
       }
     }
   });
-}
+};
 
 Zap.prototype.draw = function () {
   
@@ -428,8 +443,7 @@ Zap.prototype.getTiles = function () {
   return tiles (this.owner.tile, this.direction, this.range, arr);
 };
 
-Zap.prototype.destroy = function (index) {
-  this.index = index;
+Zap.prototype.destroy = function () {
   this.destroyed = true;
 };
 
@@ -511,9 +525,9 @@ Weapon.prototype.update = function (dt) {
 
 var weapons = {
   shotgun: {
-    rof:1.5,
-    bulletSpeed: 3,
-    fire: function(x,y,direction, speed){
+    rof:1,
+    bulletSpeed: 30,
+    fire: function(x,y,direction){
       var toReturn = [], angle, startAngle, angularDistance, spread = Math.PI/12, bullets = 10;
       switch (direction) {
         case 'up':
@@ -532,7 +546,7 @@ var weapons = {
       startAngle = angle - spread/2;
       angularDistance = spread/bullets;
       for (var i=0; i < bullets; i=i+1) {
-        toReturn.push(new Bullet(x,y,[Math.cos(startAngle), Math.sin(startAngle)], speed));
+        toReturn.push(new Bullet(x,y,[Math.cos(startAngle), Math.sin(startAngle)], this.bulletSpeed));
         startAngle = startAngle + angularDistance;
       }
       return toReturn;

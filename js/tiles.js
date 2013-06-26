@@ -97,7 +97,7 @@ function Tile (tileInfo,posX,posY) {
   this.hitPoints = 10;
 }
 
-Tile.prototype.update = function (damage) {
+Tile.prototype.hit = function (damage) {
   this.hitPoints = this.hitPoints - damage;
   if (this.hitPoints <= 0) {
     newTile = new Tile ('open', this.posX, this.posY);
