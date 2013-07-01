@@ -105,6 +105,7 @@ function resizeMap() {
 
 //ACTUAL GAME
 function startGame() {
+	gameInProgress = true;
 	if ($('#gameCanvas').length) {gameArea.removeChild(document.getElementById('gameCanvas'));}
 	$('.options').css({display:'none'});
 	var gameCanvas = document.createElement("canvas"),
@@ -135,12 +136,12 @@ function startGame() {
 		if (resize){
 			resizeMap();
 
-			game.height = mapCanvas.height;
-			game.width = mapCanvas.width;
-			player.x = player.tile.getTilePosition().x + tileSize/2;
-			player.y = player.tile.getTilePosition().y + tileSize/2;
-			player.speed = tileSize*world.speed;
-			_.each(enemies, function(e) {
+			gameCanvas.height = mapCanvas.height;
+			gameCanvas.width = mapCanvas.width;
+			game.player.x = game.player.tile.getTilePosition().x + tileSize/2;
+			game.player.y = game.player.tile.getTilePosition().y + tileSize/2;
+			game.player.speed = tileSize*world.speed;
+			_.each(game.enemies, function(e) {
 				e.x = e.tile.getTilePosition().x + tileSize/2;
 				e.y = e.tile.getTilePosition().y + tileSize/2;
 				e.speed = tileSize*world.speed;
