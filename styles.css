@@ -24,3 +24,13 @@ aside {
 #undoButton {
 	display:none;
 }
+
+#infoText {
+	color:white;
+	font-size: 160px;
+	display:none;
+	text-align: center;
+	z-index: 1000;
+	position: absolute;
+	width: 100%;
+}

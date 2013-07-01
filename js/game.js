@@ -1,10 +1,78 @@
+function StateMachine(states){
+  this.currentState;
+  this.states = states;
+  this.indexes = {}; //just for convinience
+  if(!states)return;
+  for( var i = 0; i< this.states.length; i++){
+    this.indexes[this.states[i].name] = i;
+    if (this.states[i].initial){
+      this.currentState = this.states[i];
+    }
+  }
+  
+}
+
+StateMachine.prototype.getStatus = function(){
+  return this.currentState.name;
+};
+StateMachine.prototype.consumeEvent = function(e){
+  if(this.currentState.events[e]){
+    this.currentState = this.states[this.indexes[this.currentState.events[e]]] ;
+  }
+};
+
+var gameStates = [
+
+  {
+    "name":"initializing",
+    "initial": true,
+    "events": {
+      "run":"running"
+    }
+  },
+
+  {
+    "name":"running",
+    "initial": false,
+    "events": {
+        "pause":"paused",
+        "lose": "lost",
+        "initialize":"initializing"
+    }
+  },
+
+  {
+    "name":"paused",
+    "initial": false,
+    "events": {
+        "unpause": "running"
+    }
+  },
+
+  {
+    "name":"lost",
+    "initial": false,
+    "events":{
+      "initialize": "initializing"
+    }
+  }
+];
+Game.prototype = new StateMachine ();
+Game.prototype.constructor = Game;
 function Game (settings) {
+  StateMachine.call(this, gameStates);
+  this.world = settings.world;
+  this.mapCanvas = settings.mapCanvas;
+  this.init();
+}
+
+Game.prototype.init = function () {
   var that = this;
-  var world = settings.world;
-  var gc = settings.world;
+  this.countdown = 3.5;
+  this.world.parse();
+  this.world.draw(this.mapCanvas);
   this.spawnTime = 2;
   this.gameOver = false;
-  this.paused = false;
   this.player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor);
   this.enemies = [];
   this.idleEnemies = []; 
@@ -18,15 +86,25 @@ function Game (settings) {
   _.each(this.enemies, function(e){ 
     that.idleEnemies.push(e);
   });
-
-}
+};
 
 Game.prototype.update = function(dt) {
   var that = this;
+  if (that.getStatus() === 'initializing' && that.countdown <=0) {
+    $('#infoText').html('');
+    $('#infoText').css({'display':'none'});
+    that.consumeEvent('run');
+  } else if (that.getStatus()==='initializing'){
+    $('#infoText').html(Math.round(that.countdown) ? Math.round(that.countdown) : "GO");
+    $('#infoText').css({'display':'block'});
+    that.countdown = that.countdown - dt;
+    return;
+  }
   that.handleInput();
+  if (this.getStatus() === 'paused') return;
+
   if (this.idleEnemies.length > 0){
     this.spawnTime = this.spawnTime - dt;
-    console.log(this.spawnTime);
     if (this.spawnTime <= 0){
       var activatedEnemy = this.idleEnemies.pop();
       activatedEnemy.init();
@@ -36,7 +114,14 @@ Game.prototype.update = function(dt) {
     }
 
   }
-  this.player.update(dt);
+  if (this.getStatus() === 'lost'){
+    this.player.dead = true;  
+    $('#infoText').html('YOU LOST!');
+    $('#infoText').css({'display':'block'});
+  } else {
+    this.player.update(dt);
+  }
+  
   _.each(this.activeEnemies, function(enemy){
     enemy.update(dt);
   });
@@ -65,7 +150,7 @@ Game.prototype.update = function(dt) {
     _.each(this.enemies, function(enemy){
       if (!enemy.dead) {
         if (collision(that.player, enemy) || that.player.tile.isSame(enemy.tile)) {
-          gameOver = 'loser';
+          that.consumeEvent('lose');
         }
       }
     });
@@ -84,6 +169,10 @@ Game.prototype.removal = function() {
 
 Game.prototype.handleInput = function () {
   var that = this;
+  if (input.isDown('P')) {
+    this.togglePause();
+  }
+  if (this.getStatus() === 'paused') return;
   if (input.isDown('LEFT')) {
     this.player.changeMovement('left');
   }
@@ -109,4 +198,21 @@ Game.prototype.handleInput = function () {
 Game.prototype.spawnGhost = function (ghostType, target){
   var tile = randomTileFromArray(world.ghostStart);
   return new Ghost (tile.getTileCenter().x, tile.getTileCenter().y, tile, tileSize*world.speed, ghostType.color, ghostType.tactics, target);
+};
+
+Game.prototype.togglePause = function () {
+  var now = Date.now();
+  if (!this.timePaused || now - this.timePaused > 300) {
+    this.timePaused = Date.now();
+
+    if (this.getStatus() === 'paused') {
+      this.consumeEvent('unpause');
+      $('#infoText').html('');
+      $('#infoText').css({'display':'none'});
+    } else {
+      this.consumeEvent('pause');
+      $('#infoText').html('PAUSED');
+      $('#infoText').css({'display':'block'});
+    }
+  }
 };

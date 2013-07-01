@@ -140,6 +140,7 @@ function Pacman (x,y,tile,speed, color) {
 
 }
 Pacman.prototype.drawPacman = function(){
+  if (this.dead) return;
     gc.fillStyle = this.color;
     var angle = 0,
         x = this.x,

@@ -51,17 +51,6 @@ function getStartY(){
 	return (cH - world.data.length*tileSize)/2;
 }
 
-
-
-
-
-//GAME FUNCTIONS
-
-
-
-
-
-
 function renderPaths() {
 	var debugCanvas = document.getElementById('debugCanvas');
 	var bugctx = debugCanvas.getContext('2d');
@@ -126,27 +115,19 @@ function startGame() {
 	gameCanvas.width = mapCanvas.width;
 	gameArea.appendChild(gameCanvas);
 	$('#gameCanvas').css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
-	world.parse();
-	world.draw(ctx);
 
-	var game = new Game ({world:world, gc:gc});
+	var game = new Game ({world:world, gameCanvas:gc, mapCanvas: ctx});
 	//END GAME SETUP
-
-	function end () {
-		if (gameOver === 'win') {
-			alert("YOU WIN");
-		} else {
-			alert("YOU SUCK!");
-		}
-	}
 
 	function main() {
 		var now = Date.now(), //current time
 				dt = (now - lastTime) / 1000.0; //time difference between clicks
 
 		game.update(dt);
-		game.removal();
-		render(game);
+		if (game.getStatus() !== "paused"){
+			game.removal();
+			render(game);
+		}
 		//removal();
 
 		lastTime = now;
@@ -167,11 +148,7 @@ function startGame() {
 			renderPaths();
 			resize = false;
 		}
-		if (game.gameOver) {
-			end();
-		} else {
-			requestAnimFrame(main);	
-		}
+		requestAnimFrame(main);	
 	}
 	if (!game.gameOver) main();	
 }
@@ -198,6 +175,14 @@ $(window).resize(function(){
 	} else {
 		resizeMap();
 	}
+
+	function resizeUI() {
+
+	}
+
+	resizeUI();
+
+
 });
 
 
