@@ -80,7 +80,7 @@ Game.prototype.removal = function() {
     }
     s.indices = [];
   });
-}
+};
 
 Game.prototype.handleInput = function () {
   var that = this;
@@ -110,17 +110,3 @@ Game.prototype.spawnGhost = function (ghostType, target){
   var tile = randomTileFromArray(world.ghostStart);
   return new Ghost (tile.getTileCenter().x, tile.getTileCenter().y, tile, tileSize*world.speed, ghostType.color, ghostType.tactics, target);
 };
-
-// Game.prototype.render = function() {
-//   gc.clearRect(0,0,gameCanvas.width, gameCanvas.height);
-//   this.player.drawPacman();
-//   _.each(this.enemies,function(enemy) {
-//     enemy.drawGhost();
-//   });
-//   _.each(this.bullets, function(bullet){
-//     bullet.draw();
-//   });
-//   if (DEBUG.PATH) {
-//     renderPaths();
-//   }
-// };

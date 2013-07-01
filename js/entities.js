@@ -254,7 +254,7 @@ Ghost.prototype.die = function () {
   this.target = randomTileFromArray(world.ghostStart);
 }
 
-Ghost.prototype.drawGhost = function () {
+Ghost.prototype.draw = function () {
   var x = this.x,
   y = this.y;
   gc.fillStyle = this.color;

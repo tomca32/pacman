@@ -11,6 +11,7 @@
 <script type="text/javascript" src="js/tiles.js"></script>
 <script type="text/javascript" src="js/maps.js"></script>
 <script type="text/javascript" src="js/entities.js"></script>
+<script type="text/javascript" src="js/editor.js"></script>
 <script type="text/javascript" src="js/game.js"></script>
 <script src="js/main.js"></script>
 </head>
@@ -20,11 +21,11 @@
 	</div>
 	<aside>
 		<div id="editorOptions">
-			<div id="emptyOption" class="option"><img src="img/empty.jpg"></div>
-			<div id="wallOption" class="option"><img src="img/wall.jpg"></div>
-			<div id="gateOption" class="option"><img src="img/gate.jpg"></div>
-			<div id="pelletOption" class="option"><img src="img/pellet.jpg"></div>
-			<div id="boosterOption" class="option"><img src="img/booster.jpg"></div>
+			<div id="emptyOption" class="tileOption" data-type="open"><img src="img/empty.jpg"></div>
+			<div id="wallOption" class="tileOption" data-type="wall"><img src="img/wall.jpg"></div>
+			<div id="gateOption" class="tileOption" data-type="gate"><img src="img/gate.jpg"></div>
+			<div id="pelletOption" class="tileOption" data-type="pellet"><img src="img/pellet.jpg"></div>
+			<div id="boosterOption" class="tileOption" data-type="booster"><img src="img/booster.jpg"></div>
 		</div>
 	</aside>
 	<div id="game">

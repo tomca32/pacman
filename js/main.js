@@ -53,114 +53,7 @@ function getStartY(){
 
 
 
-function drawEditor(tile, editor) {
-	var ctxed = document.getElementById('editorCanvas').getContext('2d'),
-			x = tile.posX*tileSize + startX,
-			y = tile.posY*tileSize + startY;
-	ctxed.clearRect(0,0,$('#editorCanvas').innerWidth(), $('#editorCanvas').innerHeight());
-	ctxed.fillStyle="rgba(255,255,255,0.5)";
-	ctxed.clearRect(0,0,editor.width, editor.height);
-	ctxed.fillRect(x,y,tileSize,tileSize);
-}
 
-//EDITOR FUNCTIONALITY
-
-function startEditor(){
-	var mousePos, activeTile,
-			action = false,
-			undoStack = [], 
-			beforePreview = false,  //storing old Tile before preview overrwrites it
-			editor = document.createElement("canvas");
-	editor.id = "editorCanvas";
-	editor.height = $('#mapCanvas').innerHeight();
-	editor.width = $('#mapCanvas').innerWidth();
-	gameArea.appendChild(editor);
-
-	function closeEditor() {
-		//Closing editor animation
-		world.map = world.export();
-		TweenLite.to('aside', 0.5, {left:-200});
-		$(document).off('click','#editor');
-		$('#editor').html('Editor');
-		$(document).on('click','#editor', startEditor);
-		$('#startButton').css({'display': 'inline'});
-		$('#undoButton').css({'display':'none'});
-		document.getElementById('game').removeChild(document.getElementById('editorCanvas'));
-	}
-	$('#editorCanvas').css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
-	$('#editor').html('Close Editor');
-	$(document).off('click','#editor');
-	$(document).on('click', '#editor', closeEditor);
-	$('#startButton').css({display:'none'});
-
-	TweenLite.to('aside', 0.5, {left:0});
-	
-
-	$(document).on('click', '#emptyOption', function(){
-		action = function(){return new Tile ("open", activeTile.posX, activeTile.posY);};
-	});
-	$(document).on('click', '#wallOption', function(){
-		action = function(){return new Tile ("wall", activeTile.posX, activeTile.posY);};
-	});
-	$(document).on('click', '#pelletOption', function(){
-		action = function(){return new Tile ("pellet", activeTile.posX, activeTile.posY);};
-	});
-	$(document).on('click', '#boosterOption', function(){
-		action = function(){return new Tile ("booster", activeTile.posX, activeTile.posY);};
-	});
-	$(document).on('click', '#gateOption', function(){
-		action = function(){return new Tile ("gate", activeTile.posX, activeTile.posY);};
-	});
-	
-	editor.addEventListener('mousemove', function(e){
-		mousePos = getMousePos(editor,e);
-		var newT, //New Preview Tile depending on selected action
-				tile = getTileAt(mousePos.x, mousePos.y);
-
-		if (activeTile === undefined || tile.posX !== activeTile.posX || tile.posY !== activeTile.posY) {
-			
-			
-
-			if (action) {
-				if (beforePreview){
-					//restoring previewed tile
-					if (world.data[beforePreview.posY][beforePreview.posX].type !== beforePreview.type){
-						world.insertTile(new Tile (beforePreview.type, beforePreview.posX, beforePreview.posY), true);
-					}
-				}
-
-				if (!tile) {return;}
-				activeTile = tile;
-				drawEditor(activeTile, editor);
-				newT = action();
-				if (activeTile.type !== newT.type){
-					//drawing preview tile
-					beforePreview = activeTile;
-					world.insertTile(new Tile (newT.type, newT.posX, newT.posY), true);
-				}
-			}
-		}
-	});
-
-	editor.addEventListener('click', function(){
-		if (!action || activeTile.type === action().type) {return false;}
-		activeTile = action();
-		undoStack.push(new Tile(beforePreview.type, beforePreview.posX, beforePreview.posY));
-		world.insertTile(new Tile(activeTile.type, activeTile.posX, activeTile.posY), true);//new Tile ("wall", activeTile.posX, activeTile.posY);
-		beforePreview = false;
-	});
-
-	$('#undoButton').css({display: 'inline'});
-
-	$(document).on('click','#undoButton', function(){
-		if (undoStack.length) {
-			var oldTile = undoStack.pop();
-			insertTile(oldTile);
-			world.draw(ctx);
-		}
-	});
-
-}
 
 //GAME FUNCTIONS
 
@@ -187,7 +80,7 @@ function render (game) {
   gc.clearRect(0,0,gameCanvas.width, gameCanvas.height);
   game.player.drawPacman();
   _.each(game.enemies,function(enemy) {
-    enemy.drawGhost();
+    enemy.draw();
   });
   _.each(game.bullets, function(bullet){
     bullet.draw();
@@ -288,8 +181,11 @@ $(window).load(function(){
 	startX = getStartX();
 	startY = getStartY();
 	world.draw(ctx);
+	var ed = new Editor (gameArea, world);
 
-	$(document).on('click','#editor', startEditor);
+	$(document).on('click','#editor', function () {
+		ed.start();
+	});
 	$(document).on('click','#startButton', startGame);
 	//startGame();
 });
