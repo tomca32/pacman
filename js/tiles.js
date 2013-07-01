@@ -1,7 +1,13 @@
 function randomInt (rMin, rMax){
   return Math.floor(Math.random() * (rMax - rMin + 1)) + rMin;
 }
-
+function getTileSize(map, canvasWidth, canvasHeight) {
+  //calculates tile dimensions
+  if (canvasWidth/map.data[0].length<canvasHeight/map.data.length){
+    return Math.floor(canvasWidth/map.data[0].length);
+  }
+  return Math.floor(canvasHeight/map.data.length);
+}
 function tileExists(posX,posY){
   //check if tile is within world bounds
   if (isNaN(posX) || isNaN(posY) || posX === undefined || posY === undefined){
@@ -54,23 +60,6 @@ function getRandomTile(world, type, excluding) {
   return getRandomTile(world, type);
 }
 
-function insertTile(tile, redrawTile){
-  //inserts tile at a position in the world (optional: redraws it)
-  var i, j, tempTile;
-  world.data[tile.posY][tile.posX] = tile;
-
-  if (redrawTile){
-    for (i =0; i<3; i=i+1){
-      for (j=0; j<3; j=j+1){
-        if (tileExists(tile.posX+j-1, tile.posY+i-1)){
-          tempTile = new Tile(world.data[tile.posY+i-1][tile.posX+j-1].type, tile.posX+j-1, tile.posY+i-1); 
-          tempTile.drawTile();
-        }
-      }
-    }
-  }
-}
-
 
 function oppositeDirection(direction){
   switch (direction) {
@@ -100,8 +89,8 @@ function Tile (tileInfo,posX,posY) {
 Tile.prototype.hit = function (damage) {
   this.hitPoints = this.hitPoints - damage;
   if (this.hitPoints <= 0) {
-    newTile = new Tile ('open', this.posX, this.posY);
-    insertTile(newTile, true);
+    this.type = 'open';
+    this.drawTile();
   }
 }
 
@@ -656,12 +645,12 @@ Tile.prototype.path = function(actor, endTile) {
 }
 
 function World (map) {
-  this.originalMap = map;
+  this.map = map;
   this.parse();
 }
 
 World.prototype.parse = function (map) {
-  var map = map === undefined ? this.originalMap : map,
+  var map = map === undefined ? this.map : map,
   newTile, newLine, i, j, line, lineL, tile,
   l = map.data.length;
 
@@ -763,6 +752,29 @@ World.prototype.export = function () {
   }
 
   return e;
+};
+
+World.prototype.insertTile = function (tile, redrawTile){
+  //inserts tile at a position in the world (optional: redraws it)
+  var i, j, tempTile;
+  this.data[tile.posY][tile.posX] = tile;
+
+  if (redrawTile){
+    for (i =0; i<3; i=i+1){
+      for (j=0; j<3; j=j+1){
+        if (tileExists(tile.posX+j-1, tile.posY+i-1)){
+          tempTile = new Tile(this.data[tile.posY+i-1][tile.posX+j-1].type, tile.posX+j-1, tile.posY+i-1); 
+          tempTile.drawTile();
+        }
+      }
+    }
+  }
+};
+
+World.prototype.removePellet = function (tile) {
+  var newT = new Tile('open', tile.posX, tile.posY);
+  this.insertTile(newT, true);
+  tile = newT;
 }
 
 var tileDictionary = {

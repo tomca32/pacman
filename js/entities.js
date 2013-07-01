@@ -92,7 +92,11 @@ Entity.prototype.moveEntity = function (dt){
       this.x += this.speed*dt;
       break;
   }
-}
+};
+
+Entity.prototype.changeMovement = function(direction){
+  this.nextMove = direction;
+};
 
 Entity.prototype.centerEntity = function () {
   var c = this.tile.getTileCenter();
