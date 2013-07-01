@@ -37,7 +37,8 @@ var gameStates = [
     "events": {
         "pause":"paused",
         "lose": "lost",
-        "initialize":"initializing"
+        "initialize":"initializing",
+        "win": "won"
     }
   },
 
@@ -53,6 +54,14 @@ var gameStates = [
     "name":"lost",
     "initial": false,
     "events":{
+      "initialize": "initializing"
+    }
+  },
+
+  {
+    "name":"won",
+    "initial": false,
+    "events": {
       "initialize": "initializing"
     }
   }
@@ -83,6 +92,7 @@ Game.prototype.init = function () {
   this.enemies.push(this.spawnGhost(ghostTypes.redGhost, this.player));
   this.enemies.push(this.spawnGhost(ghostTypes.greenGhost, this.player));
   this.enemies.push(this.spawnGhost(ghostTypes.blueGhost, this.player));
+  this.enemies.push(this.spawnGhost(ghostTypes.whiteGhost, this.player));
   _.each(this.enemies, function(e){ 
     that.idleEnemies.push(e);
   });
@@ -118,10 +128,19 @@ Game.prototype.update = function(dt) {
     this.player.dead = true;  
     $('#infoText').html('YOU LOST!');
     $('#infoText').css({'display':'block'});
+    _.each(this.activeEnemies, function (enemy){
+      enemy.tactics = randomTactics;
+    });
   } else {
     this.player.update(dt);
   }
-  
+  if (this.getStatus() === 'won'){
+    $('#infoText').html('YOU WON!');
+    $('#infoText').css({'display':'block'});
+    _.each(this.activeEnemies, function (enemy){
+      enemy.die();
+    });
+  } 
   _.each(this.activeEnemies, function(enemy){
     enemy.update(dt);
   });
@@ -145,7 +164,7 @@ Game.prototype.update = function(dt) {
   }
 
   if (world.pellets < 1) {
-    this.gameOver = 'win';
+    this.consumeEvent('win');
   } else {
     _.each(this.enemies, function(enemy){
       if (!enemy.dead) {
@@ -197,7 +216,7 @@ Game.prototype.handleInput = function () {
 
 Game.prototype.spawnGhost = function (ghostType, target){
   var tile = randomTileFromArray(world.ghostStart);
-  return new Ghost (tile.getTileCenter().x, tile.getTileCenter().y, tile, tileSize*world.speed, ghostType.color, ghostType.tactics, target);
+  return new Ghost (tile.getTileCenter().x, tile.getTileCenter().y, tile, tileSize*world.speed, ghostType.color, ghostType.tactics, ghostType.fallback, target);
 };
 
 Game.prototype.togglePause = function () {

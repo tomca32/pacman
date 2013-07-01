@@ -205,7 +205,7 @@ Pacman.prototype.fire = function(){
 ///////////////////////////////////////////GHOST//////////////////////////////////////////////////
 Ghost.prototype = new Entity();
 Ghost.prototype.constructor = Ghost;
-function Ghost (x,y,tile,speed,color, tactics, target) {
+function Ghost (x,y,tile,speed,color, tactics, fallback, target) {
 
   Entity.call(this, x,y,tile,speed,color);
   this.steps = 20;
@@ -215,6 +215,7 @@ function Ghost (x,y,tile,speed,color, tactics, target) {
   this.path = [];
   this.oldTile = tile;
   this.tactics = tactics;
+  this.fallback = fallback;
   this.defaultTarget = target;
   this.target = target;
   this.defaultHP = 10;
@@ -228,7 +229,7 @@ Ghost.prototype.updatePath = function() {
   } else {
     this.path = this.tile.path(this, this.tactics(this.target));
     if (this.path.length < 1) {
-      this.path = this.tile.path(this, this.target.tile);
+      this.path = this.tile.path(this, this.fallback(this.target));
     }
   }
 };
@@ -479,6 +480,9 @@ var ghostTypes = {
         return toReturn;
       }
       return getTargetTile.call(this, target);
+    },
+    fallback: function (target) {
+      return target.tile;
     }
   },
   greenGhost: {
@@ -507,11 +511,26 @@ var ghostTypes = {
         return toReturn;
       }
       return getTargetTile.call(this, target);
+    },
+    fallback: function (target) {
+      return target.tile;
     }
   },
   blueGhost: {
     color: "rgba(0,0,255,1)",
     tactics: function (target) {
+      return getRandomTile(world, "any", ["wall"]);
+    },
+    fallback: function (target) {
+      return getRandomTile(world, "any", ["wall"]);
+    }
+  },
+  whiteGhost: {
+    color: "rgba(255,255,255,1)",
+    tactics: function (target) {
+      return getRandomTile(world, "any", ["wall"]);
+    },
+    fallback: function (target) {
       return getRandomTile(world, "any", ["wall"]);
     }
   }
@@ -564,4 +583,8 @@ var weapons = {
     }
 
   }
+}
+
+function randomTactics(target) {
+  return getRandomTile(world, "any", ["wall"]);
 }
