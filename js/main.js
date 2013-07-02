@@ -8,7 +8,7 @@ var requestAnimFrame = (function() {
 		window.setTimeout(callback, 1000 / 60);
 };
 }());
-var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc;
+var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc,game;
 var DEBUG = {
 	SHOWGRID: false,
 	PATH: true,
@@ -20,6 +20,13 @@ function getMousePos(c, e) {
     return {x: e.clientX - rect.left,y: e.clientY - rect.top};
 }
 
+
+function getStartX(){
+	return (cW - world.data[0].length*tileSize)/2;
+}
+function getStartY(){
+	return (cH - world.data.length*tileSize)/2;
+}
 
 $(document).ready(function() {
 var wHeight = $(window).innerHeight(),
@@ -43,92 +50,17 @@ if (DEBUG.PATH) {
 	gameArea.appendChild(debugCanvas);
 	$(debugCanvas).css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
 }
-
-function getStartX(){
-	return (cW - world.data[0].length*tileSize)/2;
-}
-function getStartY(){
-	return (cH - world.data.length*tileSize)/2;
-}
-
-function renderPaths() {
-	var debugCanvas = document.getElementById('debugCanvas');
-	var bugctx = debugCanvas.getContext('2d');
-	bugctx.clearRect(0,0,debugCanvas.width,debugCanvas.height);
-	_.each(DEBUG.PATHS, function(debugPath) {
-		bugctx.fillStyle = debugPath.color;
-		bugctx.globalAlpha = 0.2;
-		_.each(debugPath.path, function(p){
-			bugctx.fillRect(p[0]*tileSize+startX,p[1]*tileSize+startY,tileSize,tileSize);
-		});
-	});
-	bugctx.globalAlpha = 1;
-}
-
-function render (game) {
-  gc.clearRect(0,0,gameCanvas.width, gameCanvas.height);
-  game.player.drawPacman();
-  _.each(game.enemies,function(enemy) {
-    enemy.draw();
-  });
-  _.each(game.bullets, function(bullet){
-    bullet.draw();
-  });
-  if (DEBUG.PATH) {
-    renderPaths();
-  }
-};
-
-
-
-function resizeMap() {
-	wHeight = $(window).innerHeight();
-	wWidth = $(window).innerWidth();
-	mapCanvas.width = wWidth * 0.9;
-	mapCanvas.height = wHeight * 0.8;
-	cW = mapCanvas.width;
-	cH = mapCanvas.height;
-	tileSize = getTileSize(world, cW, cH);
-	startX = getStartX();
-	startY = getStartY();
-	if ($('#editorCanvas').length) {
-		editorCanvas.width = cW;
-		editorCanvas.height = cH;
-	}
-	if ($('#debugCanvas').length) {
-		debugCanvas.width = cW;
-		debugCanvas.height = cH;
-		renderPaths();
-	}
-	world.draw(ctx);
-}
-
-//ACTUAL GAME
-function startGame() {
-	gameInProgress = true;
-	if ($('#gameCanvas').length) {gameArea.removeChild(document.getElementById('gameCanvas'));}
-	$('.options').css({display:'none'});
-	var gameCanvas = document.createElement("canvas"),
-			lastTime = Date.now();
-	gc = gameCanvas.getContext('2d');
-	gameCanvas.id = "gameCanvas";
-	gameCanvas.height = mapCanvas.height;
-	gameCanvas.width = mapCanvas.width;
-	gameArea.appendChild(gameCanvas);
-	$('#gameCanvas').css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
-
-	var game = new Game ({world:world, gameCanvas:gc, mapCanvas: ctx});
-	//END GAME SETUP
-
-	function main() {
-		var now = Date.now(), //current time
+var now,lastTime;
+function main() {
+	if (lastTime === undefined) lastTime = Date.now();
+		now = Date.now(); //current time
 				dt = (now - lastTime) / 1000.0; //time difference between clicks
 
-		game.update(dt);
-		if (game.getStatus() !== "paused"){
-			game.removal();
-			render(game);
-		}
+				game.update(dt);
+				if (game.getStatus() !== "paused"){
+					game.removal();
+					render(game);
+				}
 		//removal();
 
 		lastTime = now;
@@ -149,9 +81,34 @@ function startGame() {
 			renderPaths();
 			resize = false;
 		}
-		requestAnimFrame(main);	
+		if (!game.gameOver) {
+			requestAnimFrame(main);	
+		} else {
+			startGame();
+		}
 	}
-	if (!game.gameOver) main();	
+//ACTUAL GAME
+function startGame() {
+	DEBUG.PATHS = {};
+	if ($('#gameCanvas').length) {gameArea.removeChild(document.getElementById('gameCanvas'));}
+	$('.options').css({display:'none'});
+	var gameCanvas = document.createElement("canvas"),
+			lastTime = Date.now();
+	gc = gameCanvas.getContext('2d');
+	gameCanvas.id = "gameCanvas";
+	gameCanvas.height = mapCanvas.height;
+	gameCanvas.width = mapCanvas.width;
+	gameArea.appendChild(gameCanvas);
+	$('#gameCanvas').css({'position':'absolute','left':$('#mapCanvas').offset().left, 'top':$('#mapCanvas').offset().top});
+	if (game) {
+		console.log("GAMEOVER");
+		game.cleanUp();
+		game.gameOver = true;
+	}
+	game = new Game ({world:world, gameCanvas:gc, mapCanvas: ctx});
+	main();
+	//END GAME SETUP
+
 }
 
 $(window).load(function(){
@@ -164,14 +121,20 @@ $(window).load(function(){
 	$(document).on('click','#editor', function () {
 		ed.start();
 	});
-	$(document).on('click','#startButton', startGame);
+	$(document).on('click','#startButton', function() {
+		if (game) {
+			game.gameOver = true;
+		} else {
+		startGame();
+		}
+	});
 	//startGame();
 });
 
 
 //RESIZE LISTENER
 $(window).resize(function(){
-	if (gameInProgress) {
+	if (game) {
 		resize = true; //If game in progress, queue the resize after tick is done
 	} else {
 		resizeMap();

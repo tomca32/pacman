@@ -1,6 +1,9 @@
 function randomInt (rMin, rMax){
   return Math.floor(Math.random() * (rMax - rMin + 1)) + rMin;
 }
+function randomFloat (rMin, rMax){
+  return Math.random() * (rMax - rMin + 1) + rMin;
+}
 function getTileSize(map, canvasWidth, canvasHeight) {
   //calculates tile dimensions
   if (canvasWidth/map.data[0].length<canvasHeight/map.data.length){
@@ -78,21 +81,24 @@ function oppositeDirection(direction){
   return false;
 }
 
-function Tile (tileInfo,posX,posY) {
+function Tile (type,posX,posY) {
   var that = this;
-  this.type = tileInfo;
+  this.type = type;
   this.posX = posX;
   this.posY = posY;
   this.hitPoints = 10;
+
+  if (this.type === 'weapon') {
+    this.weapon = randomWeapon();
+  }
 }
 
 Tile.prototype.hit = function (damage) {
   this.hitPoints = this.hitPoints - damage;
   if (this.hitPoints <= 0) {
-    this.type = 'open';
-    this.drawTile();
+    world.insertTile(new Tile('open', this.posX, this.posY), true);
   }
-}
+};
 
 Tile.prototype.getTilePosition = function(){
   //gets tile x,y coords
@@ -536,6 +542,10 @@ Tile.prototype.drawBoosterTile = function(x,y){
   ctx.fill(); 
 };
 
+Tile.prototype.drawWeapon = function(x,y){
+  this.weapon.draw(x,y);
+};
+
 Tile.prototype.drawTile = function(){
   var x = this.getTilePosition().x,
       y = this.getTilePosition().y;
@@ -570,6 +580,9 @@ Tile.prototype.drawTile = function(){
     this.drawWallTile(x,y);
     break;
 
+    case "weapon":
+    this.drawWeapon(x,y);
+    break;
   }
 }
 
@@ -707,6 +720,10 @@ World.prototype.parse = function (map) {
         newTile = new Tile("enemy",j,i);
         this.ghostStart.push(newTile);
         break;
+
+        case "W":
+        newTile = new Tile("weapon",j,i);
+        break;
       }
       newLine.push(newTile);
     }
@@ -763,7 +780,7 @@ World.prototype.insertTile = function (tile, redrawTile){
     for (i =0; i<3; i=i+1){
       for (j=0; j<3; j=j+1){
         if (tileExists(tile.posX+j-1, tile.posY+i-1)){
-          tempTile = new Tile(this.data[tile.posY+i-1][tile.posX+j-1].type, tile.posX+j-1, tile.posY+i-1); 
+          tempTile = this.data[tile.posY+i-1][tile.posX+j-1]; 
           tempTile.drawTile();
         }
       }

@@ -64,7 +64,7 @@ var gameStates = [
     "events": {
       "initialize": "initializing"
     }
-  }
+  },
 ];
 Game.prototype = new StateMachine ();
 Game.prototype.constructor = Game;
@@ -77,11 +77,10 @@ function Game (settings) {
 
 Game.prototype.init = function () {
   var that = this;
-  this.countdown = 3.5;
+  this.countdown = 0.5;
   this.world.parse();
   this.world.draw(this.mapCanvas);
   this.spawnTime = 2;
-  this.gameOver = false;
   this.player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor);
   this.enemies = [];
   this.idleEnemies = []; 
@@ -158,9 +157,14 @@ Game.prototype.update = function(dt) {
       this.bullets[i].collide(this.enemies[j]);
     }
   }
-  if (this.player.tile.type === 'pellet' || this.player.tile.type === 'booster') {
+  var pT = this.player.tile;
+  if (pT.type === 'pellet' || pT.type === 'booster') {
     world.pellets = world.pellets - 1;
     world.removePellet(this.player.tile);
+  }
+  if (pT.type === 'weapon') {
+    this.player.weapon = new Weapon (pT.weapon);
+    this.world.insertTile(new Tile('open', pT.posX, pT.posY), true);
   }
 
   if (world.pellets < 1) {
@@ -233,5 +237,11 @@ Game.prototype.togglePause = function () {
       $('#infoText').html('PAUSED');
       $('#infoText').css({'display':'block'});
     }
+  }
+};
+
+Game.prototype.cleanUp = function () {
+  for (prop in this) {
+    prop = undefined;
   }
 };

@@ -30,7 +30,7 @@ Entity.prototype.update = function (dt){
       this.y = startY+1;
     }
     this.tile = getTileAt(this.x, this.y);
-    if (this.inTileCenter(0.009 * this.speed/tileSize)) {
+    if (this.inTileCenter(0.012 * this.speed/tileSize)) {
         
       if (this.isGhost) {
         if (this.tile.type === 'enemy' && this.HP < this.defaultHP) {
@@ -232,7 +232,8 @@ Ghost.prototype.updatePath = function() {
       this.path = this.tile.path(this, this.fallback(this.target));
     }
   }
-  if (!this.path.length) {
+  if (!this.path.length && !this.dead) {
+    console.log(this);
     //in case of a dead end - ghost can go back
     this.illegalTile = false;
     this.updatePath();
@@ -409,32 +410,68 @@ Zap.prototype.collide = function (enemy) {
 };
 
 Zap.prototype.draw = function () {
+  var that = this;
   
   gc.beginPath();
+  function drawHit(x,y,angle) {
+    gc.strokeStyle = "rgba("+randomInt(0,255)+","+randomInt(0,255)+","+randomInt(0,255)+",1)";
+    gc.lineWidth = 1;
+    gc.moveTo(x,y);
+    gc.lineTo(x+Math.cos(angle)*tileSize/2+randomFloat(-1,1)*Math.sin(angle)*tileSize/2, y+Math.sin(angle)*tileSize/2+randomFloat(-1,1)*Math.cos(angle)*tileSize/2);
+    gc.moveTo(x,y);
+    gc.stroke();
+  }
+  function drawAtRandom(x,y) {
+    gc.strokeStyle = "rgba("+randomInt(0,255)+","+randomInt(0,255)+","+randomInt(0,255)+",1)";
+    gc.lineWidth = 3;
+    var x = x + (tileSize/3)*randomInt(-1,1);
+    var y = y + (tileSize/3)*randomInt(-1,1);
+    gc.lineTo(x,y);
+    gc.stroke();
+  }
+
+  function drawWallEffect(tile, direction) {
+    var pos = tile.getTileCenter(), angle;
+    switch (direction) {
+      case "up":
+      angle = Math.PI/2;
+      break;
+
+      case "right":
+      angle = Math.PI;
+      break;
+
+      case "down":
+      angle =3* Math.PI /2;
+      break;
+
+      case "left":
+      angle = 0;
+      break;
+    }
+    for (var i = 0; i<randomInt(5,12); i = i+1){  
+      drawHit(pos.x,pos.y,angle);
+    }
+  }
 
   function drawLightning (arr,d){
-    function drawAtRandom(x,y) {
-      gc.strokeStyle = "rgba("+randomInt(0,255)+","+randomInt(0,255)+","+randomInt(0,255)+",1)";
-      gc.lineWidth = 3;
-      var x = x + (tileSize/3)*randomInt(-1,1);
-      var y = y + (tileSize/3)*randomInt(-1,1);
-      gc.lineTo(x,y);
-    }
 
     if (arr.length <=0) {
       return;
     } else {
       var newT = arr.pop();
       gc.moveTo(newT.getTileEnd(d).x,newT.getTileEnd(d).y);
-      drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
-      drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
-      drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
-      drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
+      for (var i = 0; i<randomInt(3,8); i = i+1){  
+        drawAtRandom(newT.getTileEnd(oppositeDirection(d)).x,newT.getTileEnd(oppositeDirection(d)).y);
+      }
       drawLightning(arr,d);
+      if (newT.checkDirection(that.direction).isWall() || newT.checkDirection(that.direction).isGate()){
+        //if lightning hits wall draws wall effect
+        drawWallEffect(newT.checkDirection(that.direction), that.direction);
+      }
     }
   }
   drawLightning(this.tiles, this.direction);
-  gc.stroke();
   gc.lineWidth = 1;
 
 };
@@ -552,6 +589,11 @@ Weapon.prototype.update = function (dt) {
   this.delay = this.delay - dt;
 }
 
+function randomWeapon() {
+  var keys = Object.keys(weapons);
+  return weapons[keys[keys.length*Math.random() << 0]];
+}
+
 var weapons = {
   shotgun: {
     rof:1,
@@ -579,14 +621,37 @@ var weapons = {
         startAngle = startAngle + angularDistance;
       }
       return toReturn;
+    },
+    draw: function (x,y) {
+      var x = x+tileSize/2,
+      y = y+tileSize/2;
+      ctx.fillStyle = "rgba(80,47,11,1)";
+      ctx.fillRect(x-tileSize/8,y, tileSize/2,tileSize/12);
+      ctx.beginPath();
+      ctx.moveTo(x-tileSize/6, y-tileSize/8);
+      ctx.lineTo(x+tileSize/2, y-tileSize/8);
+      ctx.lineTo(x+tileSize/2, y+tileSize/4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "rgba(45,45,45,1)";
+      ctx.fillRect(x-tileSize/2,y-tileSize/8, 2*tileSize/3,tileSize/8);
+      ctx.fillStyle = "rgba(0,0,0,1)";
     }
   },
   zapGun: {
     rof: 10,
     fire: function (x,y,direction,owner) {
       return [new Zap(x,y,direction, owner)];
+    },
+    draw: function (x,y) {
+      var x = x+tileSize/2,
+      y = y+tileSize/2;
+      ctx.fillStyle = "rgba(0,0,200,1)";
+      ctx.beginPath();
+      ctx.arc(x,y,tileSize/5, 0, Math.PI *2, true);
+      ctx.closePath();
+      ctx.fill(); 
     }
-
   }
 }
 

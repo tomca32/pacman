@@ -54,7 +54,6 @@ Editor.prototype.draw = function (tile) {
   ctxed.fillStyle="rgba(255,255,255,0.5)";
   ctxed.clearRect(0,0,editor.width, editor.height);
   ctxed.fillRect(x,y,tileSize,tileSize);
-  console.log('draw');
 };
 
 Editor.prototype.start = function () {

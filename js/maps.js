@@ -8,7 +8,7 @@ var classicMap = {
   data: [
   "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   "XooooooooooooXXooooooooooooX", 
-  "XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
+  "XWXXXXoXXXXXoXXoXXXXXoXXXXWX", 
   "XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
   "XoXXXXoXXXXXoXXoXXXXXoXXXXoX", 
   "XooooooooooooooooooooooooooX", 
@@ -34,7 +34,7 @@ var classicMap = {
   "XXXoXXoXXoXXXXXXXXoXXoXXoXXX",
   "XooooooXXooooXXooooXXooooooX",
   "XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
-  "XoXXXXXXXXXXoXXoXXXXXXXXXXoX",
+  "XWXXXXXXXXXXoXXoXXXXXXXXXXWX",
   "XooooooooooooooooooooooooooX",
   "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
 };
