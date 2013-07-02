@@ -77,7 +77,11 @@ function Game (settings) {
 
 Game.prototype.init = function () {
   var that = this;
-  this.countdown = 0.5;
+  this.spree = {
+    countdown:0,
+    kills:0
+  };
+  this.countdown = 3.5;
   this.world.parse();
   this.world.draw(this.mapCanvas);
   this.spawnTime = 2;
@@ -124,7 +128,7 @@ Game.prototype.update = function(dt) {
 
   }
   if (this.getStatus() === 'lost'){
-    this.player.dead = true;  
+    this.player.die();  
     $('#infoText').html('YOU LOST!');
     $('#infoText').css({'display':'block'});
     _.each(this.activeEnemies, function (enemy){
@@ -148,22 +152,31 @@ Game.prototype.update = function(dt) {
   });
   var bulLength = this.bullets.length;
   var eneLength = this.enemies.length;
+  SPREE.countdown = SPREE.countdown - dt;
+  if (SPREE.countdown <= 0) SPREE.kills = 0;
+  if (SPREE.kills >= 3) {
+          monsterKill.play();
+          SPREE = {countdown:0, kills:0};
+        }
   for (var i = 0; i< bulLength; i = i +1) {
     if (this.bullets[i].destroyed) {
       this.toRemove.bullets.indices.push(i);
       continue;
     }
     for (var j = 0; j < eneLength; j = j + 1) {
-      this.bullets[i].collide(this.enemies[j]);
+      this.bullets[i].collide(this.enemies[j])
     }
   }
   var pT = this.player.tile;
   if (pT.type === 'pellet' || pT.type === 'booster') {
     world.pellets = world.pellets - 1;
     world.removePellet(this.player.tile);
+    gulp.play();
   }
   if (pT.type === 'weapon') {
     this.player.weapon = new Weapon (pT.weapon);
+    console.log(this.player.weapon);
+    this.player.weapon.pickup();
     this.world.insertTile(new Tile('open', pT.posX, pT.posY), true);
   }
 

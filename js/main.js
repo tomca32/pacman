@@ -8,7 +8,7 @@ var requestAnimFrame = (function() {
 		window.setTimeout(callback, 1000 / 60);
 };
 }());
-var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc,game;
+var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc,game, SPREE = {kills:0, countdown:0};
 var DEBUG = {
 	SHOWGRID: false,
 	PATH: true,
@@ -90,6 +90,7 @@ function main() {
 //ACTUAL GAME
 function startGame() {
 	DEBUG.PATHS = {};
+	SPREE = {kills:0, countdown:0};
 	if ($('#gameCanvas').length) {gameArea.removeChild(document.getElementById('gameCanvas'));}
 	$('.options').css({display:'none'});
 	var gameCanvas = document.createElement("canvas"),
@@ -106,6 +107,9 @@ function startGame() {
 		game.gameOver = true;
 	}
 	game = new Game ({world:world, gameCanvas:gc, mapCanvas: ctx});
+	startSounds[randomInt(0, startSounds.length -1)].play();
+	dukeMusic.stop();
+	dukeMusic.play();
 	main();
 	//END GAME SETUP
 

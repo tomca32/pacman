@@ -124,7 +124,9 @@ Entity.prototype.hit = function (damage) {
   if (this.dead) return;
   this.HP = this.HP - damage;
   if (this.HP<=0) this.die();
-}
+  SPREE.countdown = 3;
+  SPREE.kills +=1;
+};
 
 
 ////////////////////////////////////////////////PACMAN////////////////////////////////////////////////////////
@@ -202,6 +204,12 @@ Pacman.prototype.fire = function(){
   return this.weapon.fire(this.x, this.y, this.orientation, this);
 
 }
+Pacman.prototype.die = function () {
+  if (!this.dead){
+    damn.play();
+    this.dead = true;
+  }
+};
 ///////////////////////////////////////////GHOST//////////////////////////////////////////////////
 Ghost.prototype = new Entity();
 Ghost.prototype.constructor = Ghost;
@@ -388,6 +396,7 @@ function Zap (x,y,direction,owner) {
 
 Zap.prototype.step = function (dt) {
   if (this.time <0) {
+    zap.stop();
     this.destroyed = true;
   } else {
     this.direction = this.owner.orientation;
@@ -583,6 +592,7 @@ function Weapon (weapon) {
   this.rof = weapon.rof;
   this.fire = weapon.fire;
   this.bulletSpeed = weapon.bulletSpeed === undefined ? false : weapon.bulletSpeed;
+  this.pickup = weapon.pickup;
 }
 
 Weapon.prototype.update = function (dt) {
@@ -620,6 +630,7 @@ var weapons = {
         toReturn.push(new Bullet(x,y,[Math.cos(startAngle), Math.sin(startAngle)], this.bulletSpeed));
         startAngle = startAngle + angularDistance;
       }
+      shotgun.play();
       return toReturn;
     },
     draw: function (x,y) {
@@ -636,11 +647,15 @@ var weapons = {
       ctx.fillStyle = "rgba(45,45,45,1)";
       ctx.fillRect(x-tileSize/2,y-tileSize/8, 2*tileSize/3,tileSize/8);
       ctx.fillStyle = "rgba(0,0,0,1)";
+    },
+    pickup: function() {
+      shotgunCock.play();
     }
   },
   zapGun: {
     rof: 10,
     fire: function (x,y,direction,owner) {
+      zap.play();
       return [new Zap(x,y,direction, owner)];
     },
     draw: function (x,y) {
@@ -651,6 +666,10 @@ var weapons = {
       ctx.arc(x,y,tileSize/5, 0, Math.PI *2, true);
       ctx.closePath();
       ctx.fill(); 
+    },
+    pickup: function() {
+      console.log(zapPickup);
+      zapPickup.play();
     }
   }
 }
