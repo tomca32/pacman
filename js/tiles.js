@@ -612,7 +612,7 @@ Tile.prototype.path = function(actor, endTile) {
     openList.splice(openList.indexOf(current),1); //removing from openList
     closedList.push(current);
 
-    neighbours = current.getValidNeighbours(actor.isGhost, actor.tile.checkDirection(oppositeDirection(actor.orientation)));
+    neighbours = current.getValidNeighbours(actor.isGhost, actor.illegalTile);
     nLength = neighbours.length;
     for (i = 0; i < nLength; i=i+1) {
      neighbour = neighbours[i];

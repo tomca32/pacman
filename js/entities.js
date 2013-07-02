@@ -232,6 +232,11 @@ Ghost.prototype.updatePath = function() {
       this.path = this.tile.path(this, this.fallback(this.target));
     }
   }
+  if (!this.path.length) {
+    //in case of a dead end - ghost can go back
+    this.illegalTile = false;
+    this.updatePath();
+  }
 };
 
 Ghost.prototype.init = function() {

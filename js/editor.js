@@ -17,13 +17,10 @@ function Editor (gameArea, world) {
   gameArea.appendChild(this.editorCanvas);
 
   $(document).on('click', '.tileOption', function(e){
-    console.log($(e.target).data("events"), that.activeTile);
     that.action = function(){return new Tile ($(e.target).parent().data("type"), that.activeTile.posX, that.activeTile.posY);}
-    console.log(that.action);
   });
   that.editorCanvas.addEventListener('mousemove', function(e){
     that.mousePos = getMousePos(that.editorCanvas,e);
-    console.log(that.mousePos);
     var newT; //New Preview Tile depending on selected action
     that.tile = getTileAt(that.mousePos.x, that.mousePos.y);
 
