@@ -1,7 +1,4 @@
-#Pacman game and Level Editor in JS
+#Pac Nukem
 
-Pacman game that also enables you to draw your own level.
+Pacman with guns and headshots!
 
-Editor working, mostly feature complete.
-
-Game unfinished, ghosts not implemented yet.

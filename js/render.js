@@ -1,4 +1,5 @@
-function resizeMap() {
+;(function (exports){
+  function resizeMap() {
   wHeight = $(window).innerHeight();
   wWidth = $(window).innerWidth();
   mapCanvas.width = wWidth * 0.9;
@@ -46,5 +47,5 @@ function renderPaths() {
   });
   bugctx.globalAlpha = 1;
 }
-
+})(this);
 
