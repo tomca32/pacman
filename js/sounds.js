@@ -62,12 +62,36 @@ var damn = new Howl ({
   volume: 0.5
 });
 
+var ghostDeath = new Howl ({
+  urls: ['sounds/ghostdeath.wav'],
+  autoplay: false,
+  buffer: false,
+  loop: false,
+  volume: 1
+});
+
+var splat = new Howl ({
+  urls: ['sounds/splat.wav'],
+  autoplay: false,
+  buffer: false,
+  loop: false,
+  volume: 1
+});
+
 var gulp = new Howl ({
   urls: ['sounds/gulp.mp3'],
   autoplay: false,
   buffer: false,
   loop: false,
   volume: 0.5
+});
+
+var waka = new Howl ({
+  urls: ['sounds/waka.mp3'],
+  autoplay: false,
+  buffer: false,
+  loop: false,
+  volume: 0.8
 });
 
 var zap = new Howl ({
@@ -110,4 +134,22 @@ var shotgunCock = new Howl ({
   volume: 0.5
 });
 
-var startSounds = [kickAss, letsRock];
+var cool = new Howl ({
+  urls: ['sounds/cool.mp3'],
+  autoplay: false,
+  buffer: false,
+  loop: false,
+  volume: 0.8
+});
+
+var comeGetSome = new Howl ({
+  urls: ['sounds/comegetsome.mp3'],
+  autoplay: false,
+  buffer: false,
+  loop: false,
+  volume: 0.8
+});
+
+var startSounds = [letsRock];
+
+var weaponPickupSounds = [cool, comeGetSome];

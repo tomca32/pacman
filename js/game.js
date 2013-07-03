@@ -84,7 +84,7 @@ Game.prototype.init = function () {
   this.countdown = 3.5;
   this.world.parse();
   this.world.draw(this.mapCanvas);
-  this.spawnTime = 2;
+  this.spawnTime = 1;
   this.player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor);
   this.enemies = [];
   this.idleEnemies = []; 
@@ -122,7 +122,6 @@ Game.prototype.update = function(dt) {
       var activatedEnemy = this.idleEnemies.pop();
       activatedEnemy.init();
       this.activeEnemies.push(activatedEnemy);
-      console.log(this.activeEnemies);
       this.spawnTime = 3;
     }
 
@@ -168,11 +167,10 @@ Game.prototype.update = function(dt) {
   if (pT.type === 'pellet' || pT.type === 'booster') {
     world.pellets = world.pellets - 1;
     world.removePellet(this.player.tile);
-    gulp.play();
+    waka.play();
   }
   if (pT.type === 'weapon') {
     this.player.weapon = new Weapon (pT.weapon);
-    console.log(this.player.weapon);
     this.player.weapon.pickup();
     this.world.insertTile(new Tile('open', pT.posX, pT.posY), true);
   }

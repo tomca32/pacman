@@ -625,7 +625,7 @@ Tile.prototype.path = function(actor, endTile) {
     openList.splice(openList.indexOf(current),1); //removing from openList
     closedList.push(current);
 
-    neighbours = current.getValidNeighbours(actor.isGhost, actor.illegalTile);
+    neighbours = current.getValidNeighbours(actor.isGhost, actor.tile.checkDirection(oppositeDirection(actor.orientation)));//actor.illegalTile);
     nLength = neighbours.length;
     for (i = 0; i < nLength; i=i+1) {
      neighbour = neighbours[i];
@@ -669,7 +669,7 @@ World.prototype.parse = function (map) {
 
   this.data = [];
   this.pellets = 0;
-  this.bgColor = map.bgColor;
+  this.bgColor = map.bgColor ? map.bgColor : "rgba(0,0,0,1)";
   this.pelletColor = map.pelletColor;
   this.boosterColor = map.boosterColor;
   this.wallColor = map.wallColor;
@@ -735,6 +735,7 @@ World.prototype.draw = function (ctx) {
   var i, j, row, tile,
   worldL = this.data.length;
   ctx.fillStyle= this.bgColor;
+  console.log(this.bgColor, ctx.fillStyle);
   ctx.fillRect(0,0,cW, cH);
   for (i = 0; i < worldL; i=i+1){
     row = this.data[i].length;
@@ -802,5 +803,6 @@ var tileDictionary = {
   gate: "G",
   tunnel: "T",
   player: "S",
-  enemy: "E"
+  enemy: "E",
+  weapon: "W"
 };

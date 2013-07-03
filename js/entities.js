@@ -30,7 +30,8 @@ Entity.prototype.update = function (dt){
       this.y = startY+1;
     }
     this.tile = getTileAt(this.x, this.y);
-    if (this.inTileCenter(0.012 * this.speed/tileSize)) {
+    
+    if (this.inTileCenter(0.019 * this.speed/tileSize)) {
         
       if (this.isGhost) {
         if (this.tile.type === 'enemy' && this.HP < this.defaultHP) {
@@ -124,6 +125,8 @@ Entity.prototype.hit = function (damage) {
   if (this.dead) return;
   this.HP = this.HP - damage;
   if (this.HP<=0) this.die();
+  ghostDeath.play();
+  splat.play();
   SPREE.countdown = 3;
   SPREE.kills +=1;
   if (SPREE.kills === 2) {
@@ -243,7 +246,7 @@ function Ghost (x,y,tile,speed,color, tactics, fallback, target) {
 
 
 }
-Ghost.prototype.updatePath = function() {
+Ghost.prototype.updatePath = function(again) {
   if (this.target.hasOwnProperty('type')) {
     this.path = this.tile.path(this, this.target);
   } else {
@@ -252,11 +255,10 @@ Ghost.prototype.updatePath = function() {
       this.path = this.tile.path(this, this.fallback(this.target));
     }
   }
-  if (!this.path.length && !this.dead) {
-    console.log(this);
+  if (!this.path.length && !this.dead && !again) {
     //in case of a dead end - ghost can go back
     this.illegalTile = false;
-    this.updatePath();
+    this.updatePath(true);
   }
 };
 
@@ -662,6 +664,7 @@ var weapons = {
     },
     pickup: function() {
       shotgunCock.play();
+      comeGetSome.play();
     }
   },
   zapGun: {
@@ -680,8 +683,8 @@ var weapons = {
       ctx.fill(); 
     },
     pickup: function() {
-      console.log(zapPickup);
       zapPickup.play();
+      cool.play();
     }
   }
 }
