@@ -1,5 +1,5 @@
 ;(function (exports){
-  function resizeMap() {
+  exports.resizeMap = function () {
   wHeight = $(window).innerHeight();
   wWidth = $(window).innerWidth();
   mapCanvas.width = wWidth * 0.9;
@@ -21,7 +21,7 @@
   world.draw(ctx);
 }
 
-function render (game) {
+exports.render  = function(game) {
   gc.clearRect(0,0,gameCanvas.width, gameCanvas.height);
   game.player.drawPacman();
   _.each(game.enemies,function(enemy) {
@@ -33,7 +33,7 @@ function render (game) {
   renderPaths();
 }
 
-function renderPaths() {
+exports.renderPaths = function() {
   if (!DEBUG.PATH) return;
   var debugCanvas = document.getElementById('debugCanvas');
   var bugctx = debugCanvas.getContext('2d');
