@@ -6,12 +6,36 @@ var dukeMusic = new Howl({
   volume: 0.3
 });
 
+var doubleKill = new Howl ({
+  urls: ['sounds/doublekill.mp3'],
+  autoplay: false,
+  buffer: false,
+  loop: false,
+  volume: 0.5
+});
+
+var multiKill = new Howl ({
+  urls: ['sounds/multikill.mp3'],
+  autoplay: false,
+  buffer: false,
+  loop: false,
+  volume: 0.5
+});
+
 var monsterKill = new Howl ({
   urls: ['sounds/monsterkill.mp3'],
   autoplay: false,
   buffer: false,
   loop: false,
   volume: 0.8
+});
+
+var holyShit = new Howl ({
+  urls: ['sounds/holyshit.mp3'],
+  autoplay: false,
+  buffer: false,
+  loop: false,
+  volume: 0.5
 });
 
 var kickAss = new Howl ({

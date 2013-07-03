@@ -29,12 +29,11 @@ function render (game) {
   _.each(game.bullets, function(bullet){
     bullet.draw();
   });
-  if (DEBUG.PATH) {
-    renderPaths();
-  }
+  renderPaths();
 }
 
 function renderPaths() {
+  if (!DEBUG.PATH) return;
   var debugCanvas = document.getElementById('debugCanvas');
   var bugctx = debugCanvas.getContext('2d');
   bugctx.clearRect(0,0,debugCanvas.width,debugCanvas.height);

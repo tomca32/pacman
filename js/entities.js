@@ -126,6 +126,18 @@ Entity.prototype.hit = function (damage) {
   if (this.HP<=0) this.die();
   SPREE.countdown = 3;
   SPREE.kills +=1;
+  if (SPREE.kills === 2) {
+    killSound(doubleKill, 'DOUBLE KILL');
+  }
+  if (SPREE.kills === 3) {
+    killSound(multiKill, 'MULTI KILL');
+  }
+  if (SPREE.kills === 4) {
+    killSound(monsterKill, 'MONSTER KILL');
+  }
+  if (SPREE.kills >= 5) {
+    killSound(holyShit, 'HOLY SHIT');
+  }
 };
 
 

@@ -154,10 +154,7 @@ Game.prototype.update = function(dt) {
   var eneLength = this.enemies.length;
   SPREE.countdown = SPREE.countdown - dt;
   if (SPREE.countdown <= 0) SPREE.kills = 0;
-  if (SPREE.kills >= 3) {
-          monsterKill.play();
-          SPREE = {countdown:0, kills:0};
-        }
+  
   for (var i = 0; i< bulLength; i = i +1) {
     if (this.bullets[i].destroyed) {
       this.toRemove.bullets.indices.push(i);

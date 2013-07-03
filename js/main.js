@@ -11,7 +11,7 @@ var requestAnimFrame = (function() {
 var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc,game, SPREE = {kills:0, countdown:0};
 var DEBUG = {
 	SHOWGRID: false,
-	PATH: true,
+	PATH: false,
 	PATHS: {}
 };
 var world, map = classicMap;
@@ -26,6 +26,18 @@ function getStartX(){
 }
 function getStartY(){
 	return (cH - world.data.length*tileSize)/2;
+}
+
+function killSound(sound, message) {
+	sound.play();
+	var killbox = document.createElement('div');
+	$(killbox).css({'color':'red', 'font-size':'40px','opacity':1, 'display':'block', 'text-align':'center', 'position':'absolute', 'z-index':900, 'width':'100%', 'top':'10%'});
+	document.body.appendChild(killbox);
+	$(killbox).html(message);
+	TweenLite.to(killbox, 1.5, {fontSize: '180px', onComplete:function(){
+		$(killbox).css({'color':'white', 'display':'none', 'font-size':'100px'});
+		document.body.removeChild(killbox);
+	}});
 }
 
 $(document).ready(function() {
