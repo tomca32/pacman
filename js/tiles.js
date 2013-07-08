@@ -39,7 +39,7 @@ function getTile(posX,posY){
 
 function getTileAt(x,y) {
   //gets tile by absolute x,y coords
-  return getTile(Math.floor((x-startX)/tileSize), Math.floor((y-startY)/tileSize));
+  return getTile(Math.floor((x-startX)/tileSize.size), Math.floor((y-startY)/tileSize.size));
 }
 
 function tileIsWall (tile) {
@@ -102,12 +102,12 @@ Tile.prototype.hit = function (damage) {
 
 Tile.prototype.getTilePosition = function(){
   //gets tile x,y coords
-  return {x:this.posX*tileSize + startX, y:this.posY*tileSize + startY};
+  return {x:this.posX*tileSize.size + startX, y:this.posY*tileSize.size + startY};
 };
 
 Tile.prototype.getTileCenter = function(){
   var pos = this.getTilePosition();
-  return {x:pos.x+tileSize/2, y: pos.y +tileSize/2};
+  return {x:pos.x+tileSize.half, y: pos.y +tileSize.half};
 };
 
 Tile.prototype.getTileEnd = function (direction) {
@@ -115,13 +115,13 @@ Tile.prototype.getTileEnd = function (direction) {
   var p = this.getTileCenter();
   switch (direction) {
     case "up":
-      return {x:p.x, y:p.y-tileSize/2};
+      return {x:p.x, y:p.y-tileSize.half};
     case "down":
-      return {x:p.x, y:p.y+tileSize/2};
+      return {x:p.x, y:p.y+tileSize.half};
     case "left":
-      return {x:p.x-tileSize/2, y:p.y};
+      return {x:p.x-tileSize.half, y:p.y};
     case "right":
-      return {x:p.x+tileSize/2, y:p.y};  
+      return {x:p.x+tileSize.half, y:p.y};  
   }
 };
 
@@ -275,11 +275,11 @@ Tile.prototype.clearTile = function(){
   var x = this.getTilePosition().x,
       y = this.getTilePosition().y;
   ctx.fillStyle=world.bgColor;
-  ctx.clearRect(x,y,tileSize,tileSize);
+  ctx.clearRect(x,y,tileSize.size, tileSize.size);
 };
 Tile.prototype.drawUpRightCornerInner = function(x,y) {
   ctx.beginPath();
-  ctx.arc(x,y+tileSize,tileSize/3,Math.PI*3/2,0, false);
+  ctx.arc(x,y+tileSize.size, tileSize.third, pi.threeHalf,0, false);
   ctx.stroke();
   if (this.isGate()) {
     ctx.fill();
@@ -288,7 +288,7 @@ Tile.prototype.drawUpRightCornerInner = function(x,y) {
 
 Tile.prototype.drawUpLeftCornerInner = function(x,y) {
   ctx.beginPath();
-  ctx.arc(x+tileSize,y+tileSize,tileSize/3,Math.PI*3/2,Math.PI, true);
+  ctx.arc(x+tileSize.size, y+tileSize.size, tileSize.third, pi.threeHalf, pi.one, true);
   ctx.stroke();
   if (this.isGate()) {
     ctx.fill();
@@ -297,7 +297,7 @@ Tile.prototype.drawUpLeftCornerInner = function(x,y) {
 
 Tile.prototype.drawDownRightCornerInner = function (x,y) {
   ctx.beginPath();
-  ctx.arc(x,y,tileSize/3,0,Math.PI/2, false);
+  ctx.arc(x,y,tileSize.third,0,pi.half, false);
   ctx.stroke(); 
   if (this.isGate()) {
     ctx.fill();
@@ -306,7 +306,7 @@ Tile.prototype.drawDownRightCornerInner = function (x,y) {
 
 Tile.prototype.drawDownLeftCornerInner = function(x,y) {
   ctx.beginPath();
-  ctx.arc(x+tileSize,y,tileSize/3,Math.PI,Math.PI/2, true);
+  ctx.arc(x+tileSize.size,y,tileSize.third, pi.one, pi.half, true);
   ctx.stroke();
   if (this.isGate()) {
     ctx.fill();
@@ -315,25 +315,25 @@ Tile.prototype.drawDownLeftCornerInner = function(x,y) {
 
 Tile.prototype.drawUpRightCornerOuter = function(x,y) {
   ctx.beginPath();
-  ctx.arc(x,y+tileSize,tileSize*2/3,Math.PI*3/2,0, false);
+  ctx.arc(x, y+tileSize.size, tileSize.doubleThird, pi.threeHalf, 0, false);
   ctx.stroke();
 };
 
 Tile.prototype.drawUpLeftCornerOuter = function(x,y) {
   ctx.beginPath();
-  ctx.arc(x+tileSize,y+tileSize,tileSize*2/3,Math.PI*3/2,Math.PI, true);
+  ctx.arc(x+tileSize.size, y+tileSize.size, tileSize.doubleThird, pi.threeHalf, pi.one, true);
   ctx.stroke();
 };
 
 Tile.prototype.drawDownLeftCornerOuter = function(x,y) {
   ctx.beginPath();
-  ctx.arc(x+tileSize,y,tileSize*2/3,Math.PI,Math.PI/2, true);
+  ctx.arc(x+tileSize.size, y, tileSize.doubleThird, pi.one, pi.half, true);
   ctx.stroke();
 };
 
 Tile.prototype.drawDownRightCornerOuter = function(x,y) {
   ctx.beginPath();
-  ctx.arc(x,y,tileSize*2/3,0,Math.PI/2, false);
+  ctx.arc(x, y, tileSize.doubleThird, 0, pi.half, false);
   ctx.stroke(); 
 };
 
@@ -354,55 +354,55 @@ Tile.prototype.drawCorner = function(x,y){
 
 Tile.prototype.drawIsolatedWall = function(x,y){
   ctx.beginPath();
-  ctx.arc(x+tileSize/2, y+tileSize/2,tileSize/6,0, Math.PI*2,true);
+  ctx.arc(x+tileSize.half, y+tileSize.half, tileSize.sixth, 0, pi.half, true);
   ctx.stroke();
 };
 
 Tile.prototype.drawLeftEnd = function(x,y) {
   ctx.beginPath();
-  ctx.moveTo(x+tileSize,y+tileSize/3);
-  ctx.lineTo(x+tileSize/3, y+tileSize/3);
-  ctx.moveTo(x+tileSize,y+tileSize*2/3);
-  ctx.lineTo(x+tileSize/3, y+tileSize*2/3);
+  ctx.moveTo(x+tileSize.size,y+tileSize.third);
+  ctx.lineTo(x+tileSize.third, y+tileSize.third);
+  ctx.moveTo(x+tileSize.size, y+tileSize.doubleThird);
+  ctx.lineTo(x+tileSize.third, y+tileSize.doubleThird);
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(x+tileSize/3, y+tileSize/2,tileSize/6,Math.PI*3/2, Math.PI/2,true);
+  ctx.arc(x+tileSize.third, y+tileSize.half, tileSize.sixth, pi.threeHalf, pi.half,true);
   ctx.stroke();
 };
 
 Tile.prototype.drawRightEnd = function (x,y) {
   ctx.beginPath();
-  ctx.moveTo(x,y+tileSize/3);
-  ctx.lineTo(x+tileSize*2/3, y+tileSize/3);
-  ctx.moveTo(x,y+tileSize*2/3);
-  ctx.lineTo(x+tileSize*2/3, y+tileSize*2/3);
+  ctx.moveTo(x,y+tileSize.third);
+  ctx.lineTo(x+tileSize.doubleThird, y+tileSize.third);
+  ctx.moveTo(x,y+tileSize.doubleThird);
+  ctx.lineTo(x+tileSize.doubleThird, y+tileSize.doubleThird);
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(x+tileSize*2/3, y+tileSize/2,tileSize/6,Math.PI*3/2, Math.PI/2,false);
+  ctx.arc(x+tileSize.doubleThird, y+tileSize.half,tileSize.sixth, pi.threeHalf, pi.half, false);
   ctx.stroke();
 };
 
 Tile.prototype.drawTopEnd = function(x,y) {
   ctx.beginPath();
-  ctx.moveTo(x+tileSize/3,y+tileSize);
-  ctx.lineTo(x+tileSize/3, y+tileSize/3);
-  ctx.moveTo(x+tileSize*2/3,y+tileSize);
-  ctx.lineTo(x+tileSize*2/3, y+tileSize/3);
+  ctx.moveTo(x+tileSize.third,y+tileSize.size);
+  ctx.lineTo(x+tileSize.third, y+tileSize.third);
+  ctx.moveTo(x+tileSize.doubleThird,y+tileSize.size);
+  ctx.lineTo(x+tileSize.doubleThird, y+tileSize.third);
   ctx.stroke(); 
   ctx.beginPath();
-  ctx.arc(x+tileSize/2, y+tileSize/3,tileSize/6,0, Math.PI,true);
+  ctx.arc(x+tileSize.half, y+tileSize.third,tileSize.sixth, 0, pi.one, true);
   ctx.stroke(); 
 };
 
 Tile.prototype.drawBottomEnd = function (x,y) {
   ctx.beginPath();
-  ctx.moveTo(x+tileSize/3,y);
-  ctx.lineTo(x+tileSize/3, y+tileSize*2/3);
-  ctx.moveTo(x+tileSize*2/3,y);
-  ctx.lineTo(x+tileSize*2/3, y+tileSize*2/3);
+  ctx.moveTo(x+tileSize.third,y);
+  ctx.lineTo(x+tileSize.third, y+tileSize.doubleThird);
+  ctx.moveTo(x+tileSize.doubleThird,y);
+  ctx.lineTo(x+tileSize.doubleThird, y+tileSize.doubleThird);
   ctx.stroke(); 
   ctx.beginPath();
-  ctx.arc(x+tileSize/2, y+tileSize*2/3,tileSize/6,0, Math.PI,false);
+  ctx.arc(x+tileSize.half, y+tileSize.doubleThird, tileSize.sixth, 0, pi.one, false);
   ctx.stroke(); 
 };
 
@@ -440,11 +440,11 @@ Tile.prototype.drawCornerTile = function (x,y){
 Tile.prototype.drawVerticalWall = function(x,y){
   if (!tileIsWall(this.left())){
     if (this.isGate() && !tileIsWall(this.right())) {
-      ctx.fillRect(x+tileSize/3,y,tileSize/3, tileSize);
+      ctx.fillRect(x+tileSize.third,y,tileSize.third, tileSize.size);
     }
     ctx.beginPath();
-    ctx.moveTo(x+tileSize/3, y);
-    ctx.lineTo(x+tileSize/3, y+tileSize);
+    ctx.moveTo(x+tileSize.third, y);
+    ctx.lineTo(x+tileSize.third, y+tileSize.size);
     ctx.stroke();
   } else {
     if (!tileIsWall(this.left().upper())){
@@ -456,8 +456,8 @@ Tile.prototype.drawVerticalWall = function(x,y){
   }
   if (!tileIsWall(this.right())){
     ctx.beginPath();
-    ctx.moveTo(x+tileSize*2/3, y);
-    ctx.lineTo(x+tileSize*2/3, y+tileSize);
+    ctx.moveTo(x+tileSize.doubleThird, y);
+    ctx.lineTo(x+tileSize.doubleThird, y+tileSize.size);
     ctx.stroke(); 
   } else {
     if (!tileIsWall(this.right().upper())){
@@ -472,11 +472,11 @@ Tile.prototype.drawVerticalWall = function(x,y){
 Tile.prototype.drawHorizontalWall = function(x,y){
   if (!tileIsWall(this.upper())){
     if (this.isGate() && !tileIsWall(this.lower())) {
-      ctx.fillRect(x,y+tileSize/3,tileSize, tileSize/3);
+      ctx.fillRect(x,y+tileSize.third,tileSize.size, tileSize.third);
     }
     ctx.beginPath();
-    ctx.moveTo(x, y+tileSize/3);
-    ctx.lineTo(x+tileSize,y+tileSize/3);
+    ctx.moveTo(x, y+tileSize.third);
+    ctx.lineTo(x+tileSize.size,y+tileSize.third);
     ctx.stroke();
   } else {
     if (!tileIsWall(this.upper().left())){
@@ -488,8 +488,8 @@ Tile.prototype.drawHorizontalWall = function(x,y){
   }
   if (!tileIsWall(this.lower())){
     ctx.beginPath();
-    ctx.moveTo(x, y+tileSize*2/3);
-    ctx.lineTo(x+tileSize,y+tileSize*2/3);
+    ctx.moveTo(x, y+tileSize.doubleThird);
+    ctx.lineTo(x+tileSize.size,y+tileSize.doubleThird);
     ctx.stroke(); 
   } else {
     if (!tileIsWall(this.lower().left())){
@@ -523,21 +523,21 @@ Tile.prototype.drawWallTile = function(x,y){
 };
 
 Tile.prototype.drawPelletTile = function(x,y){
-  var x = x+tileSize/2,
-      y = y+tileSize/2;
+  var x = x+tileSize.half,
+      y = y+tileSize.half;
   ctx.fillStyle= world.pelletColor;
   ctx.beginPath();
-  ctx.arc(x,y,tileSize/10, 0, Math.PI *2, true);
+  ctx.arc(x,y,tileSize.o1, 0, pi.double, true);
   ctx.closePath();
   ctx.fill();
 };
 
 Tile.prototype.drawBoosterTile = function(x,y){
-  var x = x+tileSize/2,
-      y = y+tileSize/2;
+  var x = x+tileSize.half,
+      y = y+tileSize.half;
   ctx.fillStyle = world.boosterColor;
   ctx.beginPath();
-  ctx.arc(x,y,tileSize/5, 0, Math.PI *2, true);
+  ctx.arc(x,y,tileSize.fifth, 0, pi.double, true);
   ctx.closePath();
   ctx.fill(); 
 };
@@ -554,9 +554,9 @@ Tile.prototype.drawTile = function(){
     ctx.strokeStyle = "rgba(255,255,255,0.2)";
     ctx.beginPath();
     ctx.moveTo(x,y);
-    ctx.lineTo(x+tileSize, y);
-    ctx.lineTo(x+tileSize, y+tileSize);
-    ctx.lineTo(x, y+tileSize);
+    ctx.lineTo(x+tileSize.size, y);
+    ctx.lineTo(x+tileSize.size, y+tileSize.size);
+    ctx.lineTo(x, y+tileSize.size);
     ctx.closePath();
     ctx.stroke();
   }

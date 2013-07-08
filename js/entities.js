@@ -1,5 +1,5 @@
 function collision (e1, e2) {
-  if (Math.abs(e1.x - e2.x) <= tileSize && Math.abs(e1.y - e2.y) <= tileSize){
+  if (Math.abs(e1.x - e2.x) <= tileSize.size && Math.abs(e1.y - e2.y) <= tileSize.size){
     return true;
   }
   return false;
@@ -31,7 +31,7 @@ Entity.prototype.update = function (dt){
     }
     this.tile = getTileAt(this.x, this.y);
     
-    if (this.inTileCenter(0.019 * this.speed/tileSize)) {
+    if (this.inTileCenter(0.019 * this.speed/tileSize.size)) {
         
       if (this.isGhost) {
         if (this.tile.type === 'enemy' && this.HP < this.defaultHP) {
@@ -114,7 +114,7 @@ Entity.prototype.centerEntity = function () {
 Entity.prototype.inTileCenter = function(tolerance){
   var c = this.tile.getTileCenter();
   tolerance = tolerance !== undefined ? tolerance : 0;
-  tolerance = tolerance*tileSize;
+  tolerance = tolerance*tileSize.size;
   if ((Math.round(this.x)- tolerance <= Math.round(c.x) + tolerance && Math.round(this.x) + tolerance >= Math.round(c.x) - tolerance) && (Math.round(this.y)-tolerance <= Math.round(c.y) + tolerance && Math.round(this.y) + tolerance >= Math.round(c.y) - tolerance)) {
     return true;
   }
@@ -170,15 +170,15 @@ Pacman.prototype.drawPacman = function(){
         break;
 
       case 'down':
-        angle = Math.PI/2;
+        angle = pi.half;
         break;
 
       case 'left':
-        angle = Math.PI;
+        angle = pi.one;
         break;
       
       case 'up':
-        angle = Math.PI * 3/2;
+        angle = pi.threeHalf;
         break;
 
       default:
@@ -188,9 +188,9 @@ Pacman.prototype.drawPacman = function(){
 
     if (this.moving) {
       if (this.closing){
-        this.frame-=0.02*this.speed/tileSize;
+        this.frame-=0.02*this.speed/tileSize.size;
       } else {
-        this.frame += 0.02*this.speed/tileSize;
+        this.frame += 0.02*this.speed/tileSize.size;
       }
       
       if (this.frame >= 1) {
@@ -200,15 +200,15 @@ Pacman.prototype.drawPacman = function(){
       }
     }
     //this.frame = 2;
-    beginArc = angle+(Math.PI/3)*this.frame;
-    endArc = Math.PI*2 + angle -(Math.PI/3)*this.frame;
-    if(beginArc >= Math.PI*2) {
-      beginArc -= Math.PI*2;
+    beginArc = angle+(pi.third)*this.frame;
+    endArc = pi.double + angle -(pi.third)*this.frame;
+    if(beginArc >= pi.double) {
+      beginArc -= pi.double;
     } else if (endArc<=0) {
-      endArc += Math.PI*2;
+      endArc += pi.double;
     }
     gc.beginPath();
-    gc.arc(x,y,tileSize*0.6, beginArc, endArc, false);
+    gc.arc(x,y,tileSize.o6, beginArc, endArc, false);
     gc.lineTo(x,y);
     gc.closePath();
     gc.fill();
@@ -290,16 +290,16 @@ Ghost.prototype.draw = function () {
   gc.fillStyle = this.color;
   gc.globalAlpha = this.HP/1000 + 1;
   gc.beginPath();
-  gc.arc(x,y -tileSize/6, tileSize*0.6, 0, Math.PI, true);
-  gc.moveTo(x - tileSize*0.6, y-tileSize/4);
-  gc.lineTo(x- tileSize *0.6, y+ tileSize*0.6);
-  gc.lineTo(x- tileSize *0.4, y+ tileSize*0.4);
-  gc.lineTo(x- tileSize *0.2, y+ tileSize*0.6);
-  gc.lineTo(x, y+ tileSize*0.4);
-  gc.lineTo(x+ tileSize *0.2, y+ tileSize*0.6);
-  gc.lineTo(x+ tileSize *0.4, y+ tileSize*0.4);
-  gc.lineTo(x+ tileSize *0.6, y+ tileSize*0.6);
-  gc.lineTo(x+ tileSize *0.6, y- tileSize/4);
+  gc.arc(x,y -tileSize.sixth, tileSize.o6, 0, pi.one, true);
+  gc.moveTo(x - tileSize.o6, y-tileSize.quarter);
+  gc.lineTo(x- tileSize.o6, y+ tileSize.o6);
+  gc.lineTo(x- tileSize.o4, y+ tileSize.o4);
+  gc.lineTo(x- tileSize.fifth, y+ tileSize.o6);
+  gc.lineTo(x, y+ tileSize.o4);
+  gc.lineTo(x+ tileSize.fifth, y+ tileSize.o6);
+  gc.lineTo(x+ tileSize.o4, y+ tileSize.o4);
+  gc.lineTo(x+ tileSize.o6, y+ tileSize.o6);
+  gc.lineTo(x+ tileSize.o6, y- tileSize.quarter);
   gc.closePath();
   gc.fill();
   gc.globalAlpha = 1;
@@ -310,11 +310,11 @@ Ghost.prototype.drawEyes = function (x,y) {
   //White Background
   gc.fillStyle="rgba(255,255,255,1)";
   gc.beginPath();
-  gc.arc(x-tileSize/3, y- tileSize/6, tileSize*0.15, 0, 2*Math.PI, true);
+  gc.arc(x-tileSize.third, y- tileSize.sixth, tileSize.o15, 0, pi.double, true);
   gc.closePath();
   gc.fill();
   gc.beginPath();
-  gc.arc(x+tileSize/3, y - tileSize/6, tileSize*0.15, 0, 2*Math.PI, true);
+  gc.arc(x+tileSize.third, y - tileSize.sixth, tileSize.o15, 0, pi.double, true);
   gc.closePath();
   gc.fill();
 
@@ -333,11 +333,11 @@ Ghost.prototype.drawEyes = function (x,y) {
 
   gc.fillStyle="rgba(0,0,0,1)";
   gc.beginPath();
-  gc.arc(x+tileSize/3+eyesDirection[0]*tileSize*0.05, y-(tileSize/6)+eyesDirection[1]*tileSize*0.05,tileSize*0.1, 0 ,2*Math.PI, true);
+  gc.arc(x+tileSize.third+eyesDirection[0]*tileSize.oo5, y-(tileSize.sixth)+eyesDirection[1]*tileSize.oo5,tileSize.o1, 0 ,pi.double, true);
   gc.closePath();
   gc.fill();
   gc.beginPath();
-  gc.arc(x-tileSize/3+eyesDirection[0]*tileSize*0.05, y-(tileSize/6)+eyesDirection[1]*tileSize*0.05,tileSize*0.1, 0 ,2*Math.PI, true);
+  gc.arc(x-tileSize.third+eyesDirection[0]*tileSize.oo5, y-(tileSize.sixth)+eyesDirection[1]*tileSize.oo5,tileSize.o1, 0 ,pi.double, true);
   gc.closePath();
   gc.fill();
 }
@@ -356,13 +356,13 @@ Bullet.prototype.draw = function() {
   gc.strokeStyle = "rgba(255,255,255,1)";
   gc.beginPath();
   gc.moveTo(this.x, this.y);
-  gc.lineTo(this.x-this.direction[0]*tileSize, this.y-this.direction[1]*tileSize);
+  gc.lineTo(this.x-this.direction[0]*tileSize.size, this.y-this.direction[1]*tileSize.size);
   gc.stroke();
 };
 
 Bullet.prototype.step = function (dt) {
-  this.x = this.x + this.direction[0]*dt*this.speed*tileSize;
-  this.y = this.y + this.direction[1]*dt*this.speed*tileSize;
+  this.x = this.x + this.direction[0]*dt*this.speed*tileSize.size;
+  this.y = this.y + this.direction[1]*dt*this.speed*tileSize.size;
   if (this.x < startX) {
       this.x = gameCanvas.width-1-startX;
   } else if (this.x > gameCanvas.width-startX -1) {
@@ -440,15 +440,15 @@ Zap.prototype.draw = function () {
     gc.strokeStyle = "rgba("+randomInt(0,255)+","+randomInt(0,255)+","+randomInt(0,255)+",1)";
     gc.lineWidth = 1;
     gc.moveTo(x,y);
-    gc.lineTo(x+Math.cos(angle)*tileSize/2+randomFloat(-1,1)*Math.sin(angle)*tileSize/2, y+Math.sin(angle)*tileSize/2+randomFloat(-1,1)*Math.cos(angle)*tileSize/2);
+    gc.lineTo(x+Math.cos(angle)*tileSize.half+randomFloat(-1,1)*Math.sin(angle)*tileSize.half, y+Math.sin(angle)*tileSize.half+randomFloat(-1,1)*Math.cos(angle)*tileSize.half);
     gc.moveTo(x,y);
     gc.stroke();
   }
   function drawAtRandom(x,y) {
     gc.strokeStyle = "rgba("+randomInt(0,255)+","+randomInt(0,255)+","+randomInt(0,255)+",1)";
     gc.lineWidth = 3;
-    var x = x + (tileSize/3)*randomInt(-1,1);
-    var y = y + (tileSize/3)*randomInt(-1,1);
+    var x = x + (tileSize.third)*randomInt(-1,1);
+    var y = y + (tileSize.third)*randomInt(-1,1);
     gc.lineTo(x,y);
     gc.stroke();
   }
@@ -457,15 +457,15 @@ Zap.prototype.draw = function () {
     var pos = tile.getTileCenter(), angle;
     switch (direction) {
       case "up":
-      angle = Math.PI/2;
+      angle = pi.half;
       break;
 
       case "right":
-      angle = Math.PI;
+      angle = pi.one;
       break;
 
       case "down":
-      angle =3* Math.PI /2;
+      angle = pi.threeHalf;
       break;
 
       case "left":
@@ -623,19 +623,19 @@ var weapons = {
     rof:1,
     bulletSpeed: 30,
     fire: function(x,y,direction){
-      var toReturn = [], angle, startAngle, angularDistance, spread = Math.PI/12, bullets = 10;
+      var toReturn = [], angle, startAngle, angularDistance, spread = pi.twelfth, bullets = 10;
       switch (direction) {
         case 'up':
-          angle = Math.PI*3/2;
+          angle = pi.threeHalf;
           break;
         case 'down':
-          angle = Math.PI/2;
+          angle = pi.half;
           break;
         case 'left':
-          angle = Math.PI;
+          angle = pi.one;
           break;
         case 'right':
-          angle = Math.PI*2;
+          angle = pi.double;
           break;
       }
       startAngle = angle - spread/2;
@@ -648,18 +648,18 @@ var weapons = {
       return toReturn;
     },
     draw: function (x,y) {
-      var x = x+tileSize/2,
-      y = y+tileSize/2;
+      var x = x+tileSize.half,
+      y = y+tileSize.half;
       ctx.fillStyle = "rgba(80,47,11,1)";
-      ctx.fillRect(x-tileSize/8,y, tileSize/2,tileSize/12);
+      ctx.fillRect(x-tileSize.eighth,y, tileSize.half,tileSize.twelfth);
       ctx.beginPath();
-      ctx.moveTo(x-tileSize/6, y-tileSize/8);
-      ctx.lineTo(x+tileSize/2, y-tileSize/8);
-      ctx.lineTo(x+tileSize/2, y+tileSize/4);
+      ctx.moveTo(x-tileSize.sixth, y-tileSize.eighth);
+      ctx.lineTo(x+tileSize.half, y-tileSize.eighth);
+      ctx.lineTo(x+tileSize.half, y+tileSize.quarter);
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = "rgba(45,45,45,1)";
-      ctx.fillRect(x-tileSize/2,y-tileSize/8, 2*tileSize/3,tileSize/8);
+      ctx.fillRect(x-tileSize.half,y-tileSize.eighth, 2*tileSize.third,tileSize.eighth);
       ctx.fillStyle = "rgba(0,0,0,1)";
     },
     pickup: function() {
@@ -674,11 +674,11 @@ var weapons = {
       return [new Zap(x,y,direction, owner)];
     },
     draw: function (x,y) {
-      var x = x+tileSize/2,
-      y = y+tileSize/2;
+      var x = x+tileSize.half,
+      y = y+tileSize.half;
       ctx.fillStyle = "rgba(0,0,200,1)";
       ctx.beginPath();
-      ctx.arc(x,y,tileSize/5, 0, Math.PI *2, true);
+      ctx.arc(x,y,tileSize.fifth, 0, pi.double, true);
       ctx.closePath();
       ctx.fill(); 
     },

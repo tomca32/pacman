@@ -22,10 +22,10 @@ function getMousePos(c, e) {
 
 
 function getStartX(){
-	return (cW - world.data[0].length*tileSize)/2;
+	return (cW - world.data[0].length*tileSize.size)/2;
 }
 function getStartY(){
-	return (cH - world.data.length*tileSize)/2;
+	return (cH - world.data.length*tileSize.size)/2;
 }
 
 function killSound(sound, message) {
@@ -51,7 +51,7 @@ mapCanvas.width = wWidth * 0.9;
 mapCanvas.height = wHeight * 0.8;
 cW = mapCanvas.width;
 cH = mapCanvas.height;
-tileSize = getTileSize(map, cW, cH);
+tileSize = new TileSize(getTileSize(map, cW, cH));
 
 if (DEBUG.PATH) {
 	var debugCanvas = document.createElement("canvas");
@@ -82,13 +82,13 @@ function main() {
 
 			gameCanvas.height = mapCanvas.height;
 			gameCanvas.width = mapCanvas.width;
-			game.player.x = game.player.tile.getTilePosition().x + tileSize/2;
-			game.player.y = game.player.tile.getTilePosition().y + tileSize/2;
-			game.player.speed = tileSize*world.speed;
+			game.player.x = game.player.tile.getTilePosition().x + tileSize.half;
+			game.player.y = game.player.tile.getTilePosition().y + tileSize.half;
+			game.player.speed = tileSize.size*world.speed;
 			_.each(game.enemies, function(e) {
-				e.x = e.tile.getTilePosition().x + tileSize/2;
-				e.y = e.tile.getTilePosition().y + tileSize/2;
-				e.speed = tileSize*world.speed;
+				e.x = e.tile.getTilePosition().x + tileSize.half;
+				e.y = e.tile.getTilePosition().y + tileSize.half;
+				e.speed = tileSize.size*world.speed;
 			});
 			renderPaths();
 			resize = false;

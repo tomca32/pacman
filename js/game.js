@@ -85,7 +85,7 @@ Game.prototype.init = function () {
   this.world.parse();
   this.world.draw(this.mapCanvas);
   this.spawnTime = 1;
-  this.player = new Pacman (world.playerStart.x * tileSize + startX+tileSize/2, world.playerStart.y*tileSize+startY+tileSize/2, getTile(world.playerStart.x, world.playerStart.y), tileSize*world.speed, world.pelletColor);
+  this.player = new Pacman (world.playerStart.x * tileSize.size + startX+tileSize.half, world.playerStart.y*tileSize.size+startY+tileSize.half, getTile(world.playerStart.x, world.playerStart.y), tileSize.size*world.speed, world.pelletColor);
   this.enemies = [];
   this.idleEnemies = []; 
   this.activeEnemies = []; 
@@ -228,7 +228,7 @@ Game.prototype.handleInput = function () {
 
 Game.prototype.spawnGhost = function (ghostType, target){
   var tile = randomTileFromArray(world.ghostStart);
-  return new Ghost (tile.getTileCenter().x, tile.getTileCenter().y, tile, tileSize*world.speed, ghostType.color, ghostType.tactics, ghostType.fallback, target);
+  return new Ghost (tile.getTileCenter().x, tile.getTileCenter().y, tile, tileSize.size*world.speed, ghostType.color, ghostType.tactics, ghostType.fallback, target);
 };
 
 Game.prototype.togglePause = function () {

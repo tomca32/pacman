@@ -6,7 +6,7 @@
   mapCanvas.height = wHeight * 0.8;
   cW = mapCanvas.width;
   cH = mapCanvas.height;
-  tileSize = getTileSize(world, cW, cH);
+  tileSize.update(getTileSize(world, cW, cH));
   startX = getStartX();
   startY = getStartY();
   if ($('#editorCanvas').length) {
@@ -42,7 +42,7 @@ exports.renderPaths = function() {
     bugctx.fillStyle = debugPath.color;
     bugctx.globalAlpha = 0.2;
     _.each(debugPath.path, function(p){
-      bugctx.fillRect(p[0]*tileSize+startX,p[1]*tileSize+startY,tileSize,tileSize);
+      bugctx.fillRect(p[0]*tileSize.size+startX,p[1]*tileSize.size+startY,tileSize.size,tileSize.size);
     });
   });
   bugctx.globalAlpha = 1;
