@@ -91,7 +91,7 @@ var waka = new Howl ({
   autoplay: false,
   buffer: false,
   loop: false,
-  volume: 0.8
+  volume: 0.3
 });
 
 var zap = new Howl ({
