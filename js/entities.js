@@ -422,14 +422,14 @@ Zap.prototype.step = function (dt) {
 };
 
 Zap.prototype.collide = function (enemy) {
-  var that = this;
-  _.each(this.tiles, function (t){
-    if (t.isSame(enemy.tile)) {
+  var i = this.tiles.length;
+  while (i--) {
+    if (this.tiles[i].isSame(enemy.tile)) {
       if (enemy.isGhost) {
-        enemy.hit(that.damage);
+        enemy.hit(this.damage);
       }
     }
-  });
+  }
 };
 
 Zap.prototype.draw = function () {
@@ -640,7 +640,7 @@ var weapons = {
       }
       startAngle = angle - spread/2;
       angularDistance = spread/bullets;
-      for (var i=0; i < bullets; i=i+1) {
+      while (bullets--) {
         toReturn.push(new Bullet(x,y,[Math.cos(startAngle), Math.sin(startAngle)], this.bulletSpeed));
         startAngle = startAngle + angularDistance;
       }

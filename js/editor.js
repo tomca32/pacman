@@ -48,12 +48,12 @@ function Editor (gameArea, world) {
 
 Editor.prototype.draw = function (tile) {
   var ctxed = this.editorCanvas.getContext('2d'),
-  x = tile.posX*tileSize + startX,
-  y = tile.posY*tileSize + startY;
+  x = tile.posX*tileSize.size + startX,
+  y = tile.posY*tileSize.size + startY;
   ctxed.clearRect(0,0,$('#editorCanvas').innerWidth(), $('#editorCanvas').innerHeight());
   ctxed.fillStyle="rgba(255,255,255,0.5)";
   ctxed.clearRect(0,0,editor.width, editor.height);
-  ctxed.fillRect(x,y,tileSize,tileSize);
+  ctxed.fillRect(x,y,tileSize.size,tileSize.size);
 };
 
 Editor.prototype.start = function () {
@@ -86,6 +86,7 @@ Editor.prototype.start = function () {
 };
 
 Editor.prototype.close = function () {
+  var ctxed = this.editorCanvas.getContext('2d');
   var that = this;
   that.action = false;
   that.world.map = that.world.export();
@@ -95,4 +96,5 @@ Editor.prototype.close = function () {
   $(document).on('click','#editor', function(){that.start();});
   $('#startButton').css({'display': 'inline'});
   $('#undoButton').css({'display':'none'});
+  ctxed.clearRect(0,0,$('#editorCanvas').innerWidth(), $('#editorCanvas').innerHeight());
 };

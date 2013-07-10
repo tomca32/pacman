@@ -3,7 +3,9 @@ function StateMachine(states){
   this.states = states;
   this.indexes = {}; //just for convinience
   if(!states)return;
-  for( var i = 0; i< this.states.length; i++){
+
+  var i = this.states.length;
+  while (i--) {
     this.indexes[this.states[i].name] = i;
     if (this.states[i].initial){
       this.currentState = this.states[i];
@@ -76,7 +78,7 @@ function Game (settings) {
 }
 
 Game.prototype.init = function () {
-  var that = this;
+  var i;
   this.spree = {
     countdown:0,
     kills:0
@@ -96,27 +98,39 @@ Game.prototype.init = function () {
   this.enemies.push(this.spawnGhost(ghostTypes.greenGhost, this.player));
   this.enemies.push(this.spawnGhost(ghostTypes.blueGhost, this.player));
   this.enemies.push(this.spawnGhost(ghostTypes.whiteGhost, this.player));
-  _.each(this.enemies, function(e){ 
-    that.idleEnemies.push(e);
-  });
+  i = this.enemies.length;
+  while (i--) {
+    this.idleEnemies.push(this.enemies[i]);
+  }
+};
+
+Game.prototype.initSequence = function () {
+  if (this.countdown <= 0) {
+    $('#infoText').html('');
+    $('#infoText').css({'display':'none'});
+    this.consumeEvent('run');
+  } else {
+    $('#infoText').html(Math.round(this.countdown) ? Math.round(this.countdown) : "GO");
+    $('#infoText').css({'display':'block'});
+    this.countdown = this.countdown - dt;
+  }
 };
 
 Game.prototype.update = function(dt) {
-  var that = this;
-  if (that.getStatus() === 'initializing' && that.countdown <=0) {
-    $('#infoText').html('');
-    $('#infoText').css({'display':'none'});
-    that.consumeEvent('run');
-  } else if (that.getStatus()==='initializing'){
-    $('#infoText').html(Math.round(that.countdown) ? Math.round(that.countdown) : "GO");
-    $('#infoText').css({'display':'block'});
-    that.countdown = that.countdown - dt;
+  var that = this, i;
+
+  if (this.getStatus() === 'initializing') { //Checking if game is still on countdown
+    this.initSequence();
     return;
   }
-  that.handleInput();
+
+  this.handleInput(); // handle all player input
+
+
   if (this.getStatus() === 'paused') return;
 
-  if (this.idleEnemies.length > 0){
+
+  if (this.idleEnemies.length > 0){ //prepare idle enemies
     this.spawnTime = this.spawnTime - dt;
     if (this.spawnTime <= 0){
       var activatedEnemy = this.idleEnemies.pop();
@@ -126,40 +140,52 @@ Game.prototype.update = function(dt) {
     }
 
   }
-  if (this.getStatus() === 'lost'){
+
+  if (this.getStatus() === 'lost'){ //if game is lost do stuff
     this.player.die();  
     $('#infoText').html('YOU LOST!');
     $('#infoText').css({'display':'block'});
-    _.each(this.activeEnemies, function (enemy){
-      enemy.tactics = randomTactics;
-    });
+    i = this.activeEnemies.length;
+    while (i--){
+      this.activeEnemies[i].tactics = randomTactics;
+    }
   } else {
     this.player.update(dt);
   }
-  if (this.getStatus() === 'won'){
+
+  if (this.getStatus() === 'won'){ //if game is won do stuff
     $('#infoText').html('YOU WON!');
     $('#infoText').css({'display':'block'});
-    _.each(this.activeEnemies, function (enemy){
-      enemy.die();
-    });
+    i = this.activeEnemies.length;
+    while (i--){
+      this.activeEnemies[i].die();
+    }
   } 
-  _.each(this.activeEnemies, function(enemy){
-    enemy.update(dt);
-  });
-  _.each(this.bullets, function(bullet){
-    bullet.step(dt);
-  });
-  var bulLength = this.bullets.length;
-  var eneLength = this.enemies.length;
+
+  //updating all active enemies
+  i = this.activeEnemies.length;
+  while (i--){
+    this.activeEnemies[i].update(dt);
+  }
+
+  //updating all bullets
+  i = this.bullets.length;
+  while (i--){
+    this.bullets[i].step(dt);
+  }
+
   SPREE.countdown = SPREE.countdown - dt;
   if (SPREE.countdown <= 0) SPREE.kills = 0;
   
-  for (var i = 0; i< bulLength; i = i +1) {
+  //check bullets destroyed and collisions with enemies
+  i = this.bullets.length;
+  while (i--) {
     if (this.bullets[i].destroyed) {
       this.toRemove.bullets.indices.push(i);
       continue;
     }
-    for (var j = 0; j < eneLength; j = j + 1) {
+    j = this.enemies.length;
+    while (j--) {
       this.bullets[i].collide(this.enemies[j])
     }
   }
@@ -178,13 +204,15 @@ Game.prototype.update = function(dt) {
   if (world.pellets < 1) {
     this.consumeEvent('win');
   } else {
-    _.each(this.enemies, function(enemy){
+    i = this.enemies.length;
+    while(i--){
+      var enemy = this.enemies[i];
       if (!enemy.dead) {
         if (collision(that.player, enemy) || that.player.tile.isSame(enemy.tile)) {
           that.consumeEvent('lose');
         }
       }
-    });
+    }
   }
 };
 
@@ -219,9 +247,10 @@ Game.prototype.handleInput = function () {
   if (input.isDown('SPACE')) {
     var newBullets = this.player.fire();
     if (newBullets) {
-      _.each (newBullets, function(b) {
-        that.bullets.push(b);
-      });
+      var i = newBullets.length;
+      while (i--) {
+        that.bullets.push(newBullets[i]);
+      }
     }
   }
 };
