@@ -11,7 +11,7 @@ var requestAnimFrame = (function() {
 var $ = jQuery, TweenLite = TweenLite, cW, cH, startX, startY, tileSize, ctx,gc,game, SPREE = {kills:0, countdown:0};
 var DEBUG = {
 	SHOWGRID: false,
-	PATH: false,
+	PATH: true,
 	PATHS: {}
 };
 var world, map = classicMap;
@@ -101,6 +101,7 @@ function main() {
 	}
 //ACTUAL GAME
 function startGame() {
+	document.activeElement.blur();
 	DEBUG.PATHS = {};
 	SPREE = {kills:0, countdown:0};
 	if ($('#gameCanvas').length) {gameArea.removeChild(document.getElementById('gameCanvas'));}
@@ -142,6 +143,7 @@ $(window).load(function(){
 			game.gameOver = true;
 		} else {
 		startGame();
+
 		}
 	});
 	//startGame();
