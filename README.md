@@ -1,25 +1,9 @@
-# Pac Nukem
+#Pac Nukem
 
-## Getting Super Powers
+Pacman with guns and headshots!
 
-Becoming a super hero is a fairly straight forward process:
+Arrow keys to move, space to fire.
 
-```
-$ give me super-powers
-```
+Ghostbuster gun kills ghosts, shotgun destroys walls.
 
-{% hint style="info" %}
- Super-powers are granted randomly so please submit an issue if you're not happy with yours.
-{% endhint %}
-
-Once you're strong enough, save the world:
-
-{% code title="hello.sh" %}
-```bash
-# Ain't no code for that yet, sorry
-echo 'You got to trust me on this, I saved the world'
-```
-{% endcode %}
-
-
-
+Have fun.
